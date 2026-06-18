@@ -1,0 +1,9 @@
+fastapi
+uvicorn[standard]
+sqlmodel
+pyjwt[crypto]
+passlib[bcrypt]
+bcrypt==4.0.1
+python-multipart
+python-dotenv
+email-validator
