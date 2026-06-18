@@ -1,6 +1,64 @@
-# DSA Tracker
+<div align="center">
 
-A spaced-repetition tracker for Data Structures & Algorithms practice, powered by the SM-2 algorithm.
+# 🧠 Engram
+
+**Spaced repetition DSA tracker for serious interview prep.**
+
+Log problems, rate your confidence, and let SM-2 schedule exactly what to review each day — so nothing you've learned ever fades.
+
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-dsa--engram.netlify.app-6366F1?style=for-the-badge&logo=netlify&logoColor=white)](https://dsa-engram.netlify.app)
+[![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
+[![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org)
+[![SQLite](https://img.shields.io/badge/SQLite-07405E?style=for-the-badge&logo=sqlite&logoColor=white)](https://sqlite.org)
+[![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://docker.com)
+
+</div>
+
+---
+
+## What is Engram?
+
+Most people grind LeetCode by solving as many problems as possible — and forget 80% of them within a week. Engram fixes that.
+
+It applies the **SM-2 spaced repetition algorithm** (the same one behind Anki) to DSA problems. Every time you review a problem, you tell it how you solved it — and Engram schedules the next review at the exact moment before you'd forget it.
+
+The result: fewer problems reviewed, deeper retention, better interviews.
+
+---
+
+## How it works
+
+Add a problem → rate each attempt → SM-2 handles the rest.
+
+| Outcome | What it means | Next review |
+|---|---|---|
+| ✅ Solved Solo | Figured it out completely | 3+ days, grows each time |
+| 💡 Used Hint | Needed a nudge | 1 day |
+| 👀 Checked Code | Had to look at the solution | 1 day, slower growth |
+
+Problems move through four stages automatically:
+
+```
+🔴 Learning → 🟡 Reviewing → 🏆 Mastered → ❄️ Frozen
+```
+
+A problem **freezes** (leaves the review queue permanently) after you solve it solo 3 consecutive times with an interval over 21 days. You've truly mastered it. You can unfreeze any problem at any time to bring it back.
+
+---
+
+## Features
+
+- **SM-2 Spaced Repetition** — server-side algorithm, not just a timer
+- **Daily Dashboard** — see exactly what's due today, what's coming up, and your streak
+- **Stage System** — Learning → Reviewing → Mastered → Frozen with automatic transitions
+- **Problem Journal** — notes and key insight saved per problem
+- **Stats Page** — 30-day activity heatmap, topic breakdown, outcome distribution
+- **JWT Auth** — register, login, your data is yours alone
+- **Cross-device sync** — data lives in the cloud, not your browser
+- **Export to JSON** — back up your entire problem set anytime
+- **Docker support** — one command local setup
+
+---
 
 ## Table of Contents
 
@@ -21,13 +79,6 @@ A spaced-repetition tracker for Data Structures & Algorithms practice, powered b
 ---
 
 ## 1. Core Idea
-
-Solving a DSA problem once isn't enough — long-term retention requires spaced repetition. DSA Tracker applies the SM-2 algorithm (used by Anki/SuperMemo) to coding problems:
-
-1. **Add problems** you've solved with topic, difficulty, and notes.
-2. **Review them daily** — rate yourself as Solved Solo, Used Hint, or Checked Code.
-3. **SM-2 schedules the next review** — easy problems space out, hard ones come back sooner.
-4. **Problems freeze** (stop reviewing) after 3+ consecutive solo solves with a 21+ day interval.
 
 ---
 
