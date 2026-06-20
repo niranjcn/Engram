@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🧠 Engra
+# 🧠 Engram
 
 **Spaced repetition DSA tracker for serious interview prep.**
 
