@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Brain, Plus, List, BarChart2, Home, ExternalLink, Download, Search, ChevronRight, X, Lightbulb, Eye, EyeOff, Trophy, Clock, Flame, BookOpen, RefreshCw } from "lucide-react";
+import { Brain, Plus, List, BarChart2, Home, ExternalLink, Download, Search, ChevronRight, ChevronDown, X, Lightbulb, Eye, EyeOff, Trophy, Clock, Flame, BookOpen, RefreshCw } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { auth, problemsApi, reviewsApi } from "./api";
 
@@ -289,6 +289,7 @@ function ReviewCard({ problem, onReview }) {
         </div>
         {safeUrl(problem.url) && <a href={safeUrl(problem.url)} target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-indigo-400 shrink-0"><ExternalLink size={15} /></a>}
       </div>
+      {problem.notes && <div className="text-xs text-gray-300 bg-gray-800/60 rounded px-2 py-1.5 mb-2 font-mono leading-relaxed whitespace-pre-wrap">{problem.notes}</div>}
       {problem.keyInsight && <div className="text-xs text-indigo-300 bg-indigo-950/40 rounded px-2 py-1.5 mb-3 font-mono">💡 {problem.keyInsight}</div>}
       <div className="text-xs text-gray-500 mb-3">How did you do this time?</div>
       <div className="flex gap-2 flex-wrap">
@@ -437,6 +438,7 @@ function ProblemList({ problems, onDelete, onEdit, onUnfreeze }) {
   const [topicF, setTopicF] = useState("All");
   const [diffF, setDiffF] = useState("All");
   const [stageF, setStageF] = useState("All");
+  const [expandedNotes, setExpandedNotes] = useState({});
 
   const STAGE_FILTERS = [
     { key: "All", label: "All" },
@@ -517,12 +519,29 @@ function ProblemList({ problems, onDelete, onEdit, onUnfreeze }) {
                 </div>
                 <div className="flex gap-1 shrink-0">
                   {safeUrl(p.url) && <a href={safeUrl(p.url)} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded text-gray-500 hover:text-indigo-400 hover:bg-indigo-950/40 transition-colors"><ExternalLink size={14} /></a>}
+                  {p.notes || p.keyInsight ? (
+                    <button onClick={() => setExpandedNotes(prev => ({ ...prev, [p.id]: !prev[p.id] }))}
+                      className={`p-1.5 rounded transition-colors ${expandedNotes[p.id] ? "text-indigo-400 bg-indigo-950/40" : "text-gray-500 hover:text-indigo-400 hover:bg-indigo-950/40"}`}
+                      title="Show notes">{expandedNotes[p.id] ? <ChevronDown size={14} /> : <ChevronRight size={14} />}</button>
+                  ) : null}
                   {p.frozen
                     ? <button onClick={() => onUnfreeze(p.id)} className="p-1.5 rounded text-indigo-400 hover:text-white hover:bg-indigo-800/40 transition-colors" title="Unfreeze — add back to reviews"><RefreshCw size={14} /></button>
                     : <button onClick={() => onEdit(p)} className="p-1.5 rounded text-gray-500 hover:text-blue-400 hover:bg-blue-950/40 transition-colors"><Search size={14} /></button>}
                   <button onClick={() => onDelete(p.id)} className="p-1.5 rounded text-gray-500 hover:text-red-400 hover:bg-red-950/40 transition-colors"><X size={14} /></button>
                 </div>
               </div>
+              {expandedNotes[p.id] && (
+                <div className="mt-3 pt-3 border-t border-gray-800 space-y-2">
+                  {p.notes && <div>
+                    <div className="text-xs text-gray-400 mb-1 font-mono uppercase tracking-wider">Notes</div>
+                    <div className="text-sm text-gray-300 whitespace-pre-wrap leading-relaxed">{p.notes}</div>
+                  </div>}
+                  {p.keyInsight && <div>
+                    <div className="text-xs text-indigo-400 mb-1 font-mono uppercase tracking-wider">Key Insight</div>
+                    <div className="text-sm text-indigo-300 italic leading-relaxed">💡 {p.keyInsight}</div>
+                  </div>}
+                </div>
+              )}
             </Card>
           );
         })}
