@@ -38,6 +38,10 @@ Add a problem → rate each attempt → SM-2 handles the rest.
 
 Problems move through four stages automatically:
 
+
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-dsa--engram.netlify.app-6366F1?style=for-the-badge&logo=netlify&logoColor=white)](https://dsa-engram.netlify.app)
+
+
 ```
 🔴 Learning → 🟡 Reviewing → 🏆 Mastered → ❄️ Frozen
 ```
