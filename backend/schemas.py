@@ -2,6 +2,7 @@ from pydantic import BaseModel, EmailStr, Field, field_validator
 from typing import Optional
 from datetime import date, datetime
 
+
 class RegisterRequest(BaseModel):
     email: EmailStr
     username: str = Field(min_length=3, max_length=30)
@@ -14,19 +15,23 @@ class RegisterRequest(BaseModel):
             raise ValueError("Username must be alphanumeric")
         return v
 
+
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str = Field(max_length=128)
+
 
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
 
+
 class UserResponse(BaseModel):
-    id: int
+    id: str
     email: str
     username: str
     created_at: datetime
+
 
 class ProblemCreate(BaseModel):
     title: str = Field(min_length=1, max_length=200)
@@ -43,6 +48,7 @@ class ProblemCreate(BaseModel):
             raise ValueError("URL must start with http:// or https://")
         return v
 
+
 class ProblemUpdate(BaseModel):
     title: Optional[str] = Field(default=None, min_length=1, max_length=200)
     url: Optional[str] = Field(default=None, max_length=2000)
@@ -58,9 +64,10 @@ class ProblemUpdate(BaseModel):
     last_outcome: Optional[str] = None
     next_review_date: Optional[date] = None
 
+
 class ProblemResponse(BaseModel):
-    id: int
-    user_id: int
+    id: str
+    user_id: str
     title: str
     url: Optional[str] = None
     topic: str
@@ -76,12 +83,15 @@ class ProblemResponse(BaseModel):
     next_review_date: date
     date_added: date
 
+
 class ReviewRequest(BaseModel):
     outcome: str
+
 
 class ReviewHistoryEntry(BaseModel):
     date: date
     count: int
+
 
 class StatsResponse(BaseModel):
     total: int

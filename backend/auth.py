@@ -4,9 +4,9 @@ import jwt
 from passlib.context import CryptContext
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from sqlmodel import Session
-from models import User
-from database import get_session
+from database import get_db
+from models import UserModel
+from bson import ObjectId
 import os
 
 load_dotenv()
@@ -20,11 +20,14 @@ ACCESS_TOKEN_EXPIRE_DAYS = 7
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 security = HTTPBearer(auto_error=False)
 
+
 def hash_password(password: str) -> str:
     return pwd_context.hash(password)
 
+
 def verify_password(plain: str, hashed: str) -> bool:
     return pwd_context.verify(plain, hashed)
+
 
 def create_access_token(data: dict) -> str:
     to_encode = data.copy()
@@ -35,10 +38,10 @@ def create_access_token(data: dict) -> str:
         token = token.decode("utf-8")
     return token
 
-def get_current_user(
+
+async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
-    session: Session = Depends(get_session),
-) -> User:
+) -> UserModel:
     if credentials is None:
         raise HTTPException(status_code=401, detail="Not authenticated")
     token = credentials.credentials
@@ -57,7 +60,9 @@ def get_current_user(
         raise HTTPException(status_code=401, detail="Token expired")
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid token")
-    user = session.get(User, int(user_id))
-    if user is None:
+    db = await get_db()
+    doc = await db.users.find_one({"_id": ObjectId(user_id)})
+    if doc is None:
         raise HTTPException(status_code=401, detail="User not found")
-    return user
+    doc["id"] = str(doc.pop("_id"))
+    return UserModel(**doc)

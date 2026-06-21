@@ -1,13 +1,24 @@
-from sqlmodel import create_engine, Session
+from motor.motor_asyncio import AsyncIOMotorClient
 from dotenv import load_dotenv
 import os
 
 load_dotenv()
 
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./dsa_tracker.db")
+MONGODB_URL = os.getenv("MONGODB_URL", "mongodb://localhost:27017")
+MONGODB_DB_NAME = os.getenv("MONGODB_DB_NAME", "dsa_tracker")
 
-engine = create_engine(DATABASE_URL, echo=False, connect_args={"check_same_thread": False})
+client: AsyncIOMotorClient | None = None
 
-def get_session():
-    with Session(engine) as session:
-        yield session
+
+async def get_db():
+    global client
+    if client is None:
+        client = AsyncIOMotorClient(MONGODB_URL)
+    return client[MONGODB_DB_NAME]
+
+
+async def close_db():
+    global client
+    if client:
+        client.close()
+        client = None

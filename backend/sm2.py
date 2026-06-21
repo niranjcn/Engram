@@ -1,4 +1,4 @@
-from datetime import date, timedelta
+from datetime import datetime, timedelta
 
 def run_sm2(problem, outcome: str) -> dict:
     quality = 5 if outcome == "solved_solo" else 3 if outcome == "used_hint" else 1
@@ -32,7 +32,7 @@ def run_sm2(problem, outcome: str) -> dict:
         else:
             interval = 1
 
-    next_review = date.today() + timedelta(days=interval)
+    next_review = datetime.utcnow() + timedelta(days=interval)
     return {
         "interval": interval,
         "ease_factor": ease_factor,

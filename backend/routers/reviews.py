@@ -1,84 +1,93 @@
 from fastapi import APIRouter, Depends
-from sqlmodel import Session, select, func, desc
-from models import User, Problem, ReviewHistory
+from models import UserModel
 from schemas import ReviewHistoryEntry, StatsResponse
 from auth import get_current_user
-from database import get_session
-from datetime import date, timedelta
+from database import get_db
+from utils import to_date
+from datetime import datetime, timedelta
 
 router = APIRouter(prefix="/reviews", tags=["reviews"])
 
+
 @router.get("/history", response_model=list[ReviewHistoryEntry])
-def get_history(
-    current_user: User = Depends(get_current_user),
-    session: Session = Depends(get_session),
+async def get_history(
+    current_user: UserModel = Depends(get_current_user),
 ):
-    thirty_days_ago = date.today() - timedelta(days=30)
-    entries = session.exec(
-        select(ReviewHistory).where(
-            ReviewHistory.user_id == current_user.id,
-            ReviewHistory.date >= thirty_days_ago,
-        ).order_by(ReviewHistory.date)
-    ).all()
-    return [ReviewHistoryEntry(date=e.date, count=e.count) for e in entries]
+    db = await get_db()
+    thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+    cursor = db.review_history.find(
+        {"user_id": current_user.id, "date": {"$gte": thirty_days_ago}},
+    ).sort("date", 1)
+    entries = []
+    async for doc in cursor:
+        entries.append(ReviewHistoryEntry(date=to_date(doc["date"]), count=doc["review_count"]))
+    return entries
+
 
 @router.get("/stats", response_model=StatsResponse)
-def get_stats(
-    current_user: User = Depends(get_current_user),
-    session: Session = Depends(get_session),
+async def get_stats(
+    current_user: UserModel = Depends(get_current_user),
 ):
-    problems = session.exec(
-        select(Problem).where(Problem.user_id == current_user.id)
-    ).all()
+    db = await get_db()
+    problems = []
+    cursor = db.problems.find({"user_id": current_user.id})
+    async for doc in cursor:
+        problems.append(doc)
     total = len(problems)
-    frozen = sum(1 for p in problems if p.frozen)
-    mastered = sum(1 for p in problems if p.repetitions >= 3 and not p.frozen)
+    frozen = sum(1 for p in problems if p.get("frozen"))
+    mastered = sum(1 for p in problems if p.get("repetitions", 0) >= 3 and not p.get("frozen"))
 
     by_topic = {}
     by_outcome = {}
     for p in problems:
-        by_topic[p.topic] = by_topic.get(p.topic, 0) + 1
-        if p.last_outcome:
-            by_outcome[p.last_outcome] = by_outcome.get(p.last_outcome, 0) + 1
+        topic = p.get("topic", "Unknown")
+        by_topic[topic] = by_topic.get(topic, 0) + 1
+        outcome = p.get("last_outcome")
+        if outcome:
+            by_outcome[outcome] = by_outcome.get(outcome, 0) + 1
 
-    history_entries = session.exec(
-        select(ReviewHistory).where(
-            ReviewHistory.user_id == current_user.id,
-        ).order_by(desc(ReviewHistory.date))
-    ).all()
+    history_entries = []
+    cursor = db.review_history.find(
+        {"user_id": current_user.id},
+    ).sort("date", -1)
+    async for doc in cursor:
+        doc["_dt"] = to_date(doc["date"])
+        history_entries.append(doc)
 
     current_streak = 0
+    streak_count = 0
+    prev_date = None
+    today = to_date(datetime.utcnow())
+    for entry in history_entries:
+        d = entry["_dt"]
+        if prev_date is None:
+            if d == today or d == today - timedelta(days=1):
+                streak_count = 1
+                prev_date = d
+        else:
+            if (prev_date - d).days == 1:
+                streak_count += 1
+                prev_date = d
+            else:
+                break
+    current_streak = streak_count
+
     longest_streak = 0
     streak_count = 0
     prev_date = None
     for entry in history_entries:
-        if prev_date is None:
-            if entry.date == date.today() or entry.date == date.today() - timedelta(days=1):
-                streak_count = 1
-                prev_date = entry.date
-        else:
-            if (prev_date - entry.date).days == 1:
-                streak_count += 1
-                prev_date = entry.date
-            else:
-                break
-
-    current_streak = streak_count
-
-    streak_count = 0
-    prev_date = None
-    for entry in history_entries:
+        d = entry["_dt"]
         if prev_date is None:
             streak_count = 1
-            prev_date = entry.date
+            prev_date = d
         else:
-            if (prev_date - entry.date).days == 1:
+            if (prev_date - d).days == 1:
                 streak_count += 1
-                prev_date = entry.date
+                prev_date = d
             else:
                 longest_streak = max(longest_streak, streak_count)
                 streak_count = 1
-                prev_date = entry.date
+                prev_date = d
     longest_streak = max(longest_streak, streak_count)
 
     return StatsResponse(

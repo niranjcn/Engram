@@ -1,17 +1,19 @@
-from sqlmodel import SQLModel, Field
+from pydantic import BaseModel, Field
 from datetime import datetime, date
 from typing import Optional
 
-class User(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
-    email: str = Field(unique=True, index=True)
-    username: str = Field(unique=True)
+
+class UserModel(BaseModel):
+    id: str = ""
+    email: str
+    username: str
     password_hash: str
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
-class Problem(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
-    user_id: int = Field(foreign_key="user.id")
+
+class ProblemModel(BaseModel):
+    id: str = ""
+    user_id: str
     title: str
     url: Optional[str] = None
     topic: str
@@ -25,10 +27,11 @@ class Problem(SQLModel, table=True):
     frozen: bool = False
     last_outcome: Optional[str] = None
     next_review_date: date
-    date_added: date = Field(default_factory=date.today)
+    date_added: date
 
-class ReviewHistory(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
-    user_id: int = Field(foreign_key="user.id")
+
+class ReviewHistoryModel(BaseModel):
+    id: str = ""
+    user_id: str
     date: date
-    count: int = 1
+    review_count: int = 1

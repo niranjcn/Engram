@@ -5,9 +5,7 @@ services:
       - "8000:8000"
     volumes:
       - ./backend:/app
-      - sqlite_data:/app/data
     env_file: ./backend/.env
-
   frontend:
     image: node:20-alpine
     working_dir: /app
@@ -19,5 +17,4 @@ services:
     environment:
       - VITE_API_URL=http://localhost:8000
 
-volumes:
-  sqlite_data:
+
