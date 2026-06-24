@@ -289,8 +289,6 @@ function ReviewCard({ problem, onReview }) {
         </div>
         {safeUrl(problem.url) && <a href={safeUrl(problem.url)} target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-indigo-400 shrink-0"><ExternalLink size={15} /></a>}
       </div>
-      {problem.notes && <div className="text-xs text-gray-300 bg-gray-800/60 rounded px-2 py-1.5 mb-2 font-mono leading-relaxed whitespace-pre-wrap">{problem.notes}</div>}
-      {problem.keyInsight && <div className="text-xs text-indigo-300 bg-indigo-950/40 rounded px-2 py-1.5 mb-3 font-mono">💡 {problem.keyInsight}</div>}
       <div className="text-xs text-gray-500 mb-3">How did you do this time?</div>
       <div className="flex gap-2 flex-wrap">
         {Object.entries(OUTCOMES).map(([k, v]) => (
