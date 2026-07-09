@@ -9,6 +9,9 @@
 - Added inline script to auto-reload on failed module/dynamic import (prevents blank page on stale cache)
 
 ### Added
+- `cryptography` dependency for Fernet token encryption
+- `crypto.py` — `encrypt_token()` / `decrypt_token()` using Fernet (derives key from `SECRET_KEY` or explicit `FERNET_KEY`)
+- `github_token_encrypted` and `github_username` fields on UserModel
 - `_redirects` file with explicit `/assets/*` passthrough before SPA catch-all
 - `_headers` file for cache-control: `index.html` never cached, `/assets/*` cached immutably
 - `AGENTS.md` with project conventions (push policy, auth rules, PWA scope)
