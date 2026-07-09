@@ -54,7 +54,7 @@ export default function Layout({ onLogout }) {
       </aside>
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col min-h-screen">
+      <div className="flex-1 flex flex-col min-h-screen overflow-x-hidden">
         {/* Top bar — mobile */}
         <div className="md:hidden sticky top-0 z-40 border-b border-[#23262E]/60 px-4 py-3 flex items-center justify-between" style={{ background: "#0E1016", backdropFilter: "blur(12px)" }}>
           <div className="flex items-center gap-2">
