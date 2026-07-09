@@ -31,3 +31,6 @@ backend/data/
 # OS
 .DS_Store
 Thumbs.db
+
+# Other
+LEARN_REACT.md
