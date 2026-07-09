@@ -71,7 +71,15 @@ export default function Layout({ onLogout }) {
             </div>
             <span className="font-semibold text-[#F1F1F3] text-sm tracking-tight">Engram</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
+            {user?.role === "admin" && (
+              <NavLink to="/admin" className="p-1.5 rounded text-[#5D616C] hover:text-[#3B82F6] hover:bg-[#3B82F6]/10 transition-colors">
+                <Shield size={15} />
+              </NavLink>
+            )}
+            <NavLink to="/settings" className="p-1.5 rounded text-[#5D616C] hover:text-[#3B82F6] hover:bg-[#3B82F6]/10 transition-colors">
+              <SettingsIcon size={15} />
+            </NavLink>
             <div className="flex items-center gap-1.5 bg-red-900/20 border border-red-800/30 rounded-lg px-2 py-1">
               <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
               <span className="text-xs text-red-400">{dueCount}</span>
