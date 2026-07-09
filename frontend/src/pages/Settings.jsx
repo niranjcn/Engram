@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import useAuth from "../hooks/useAuth";
 import { githubApi } from "../api";
 
@@ -9,46 +9,12 @@ export default function Settings() {
   const [clientId, setClientId] = useState(null);
   const [connecting, setConnecting] = useState(false);
   const [error, setError] = useState(null);
-  const pollRef = useRef(null);
 
   useEffect(() => {
     githubApi.config().then((c) => setClientId(c.client_id)).catch(() => {});
   }, []);
 
-  function handleConnect() {
-    if (!clientId) return;
-    setError(null);
-    setConnecting(true);
-
-    const redirectUri = window.location.origin + "/settings";
-    const url = "https://github.com/login/oauth/authorize"
-      + "?client_id=" + encodeURIComponent(clientId)
-      + "&redirect_uri=" + encodeURIComponent(redirectUri)
-      + "&scope=" + encodeURIComponent(GITHUB_SCOPE);
-
-    const popup = window.open(url, "github-oauth", "width=600,height=700");
-
-    pollRef.current = setInterval(() => {
-      try {
-        if (!popup || popup.closed) {
-          clearInterval(pollRef.current);
-          setConnecting(false);
-          return;
-        }
-        const params = new URLSearchParams(popup.location.search);
-        const code = params.get("code");
-        if (code) {
-          clearInterval(pollRef.current);
-          popup.close();
-          exchangeCode(code);
-        }
-      } catch {
-        /* cross-origin — still on github.com, keep polling */
-      }
-    }, 500);
-  }
-
-  async function exchangeCode(code) {
+  const exchangeCode = useCallback(async (code) => {
     try {
       await githubApi.connect(code);
       window.location.reload();
@@ -56,11 +22,37 @@ export default function Settings() {
       setError(err.message);
       setConnecting(false);
     }
-  }
+  }, []);
 
   useEffect(() => {
-    return () => { if (pollRef.current) clearInterval(pollRef.current); };
-  }, []);
+    function handler(e) {
+      if (e.origin !== window.location.origin) return;
+      if (e.data?.type === "github-oauth") {
+        setConnecting(false);
+        exchangeCode(e.data.code);
+      }
+    }
+    window.addEventListener("message", handler);
+    return () => window.removeEventListener("message", handler);
+  }, [exchangeCode]);
+
+  function handleConnect() {
+    if (!clientId) return;
+    setError(null);
+    setConnecting(true);
+
+    const redirectUri = window.location.origin + "/github-callback";
+    const url = "https://github.com/login/oauth/authorize"
+      + "?client_id=" + encodeURIComponent(clientId)
+      + "&redirect_uri=" + encodeURIComponent(redirectUri)
+      + "&scope=" + encodeURIComponent(GITHUB_SCOPE);
+
+    window.open(url, "github-oauth", "width=600,height=700");
+  }
+
+  async function handleDisconnect() {
+    /* not yet implemented */
+  }
 
   return (
     <div className="max-w-2xl space-y-6">
@@ -84,7 +76,7 @@ export default function Settings() {
               </div>
             </div>
             <button
-              onClick={() => {/* disconnect */}}
+              onClick={handleDisconnect}
               className="px-4 py-2 text-sm text-red-400 hover:text-red-300 border border-red-400/30 hover:border-red-400/50 rounded-lg transition"
             >
               Disconnect

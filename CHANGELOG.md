@@ -16,6 +16,7 @@
 - `GET /auth/github/config` endpoint — exposes `client_id` to frontend
 - `github_username` exposed in `GET /auth/me` response
 - Settings page: "Connect GitHub" button with OAuth popup flow, shows connected username when linked
+- `GithubCallback` page — dedicated OAuth callback route that reads `?code=`, sends via `postMessage` to opener, and closes popup
 - `_redirects` file with explicit `/assets/*` passthrough before SPA catch-all
 - `_headers` file for cache-control: `index.html` never cached, `/assets/*` cached immutably
 - `AGENTS.md` with project conventions (push policy, auth rules, PWA scope)

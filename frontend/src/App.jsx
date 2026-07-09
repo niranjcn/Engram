@@ -10,6 +10,7 @@ import AddProblem from "./pages/AddProblem";
 import EditProblem from "./pages/EditProblem";
 import Stats from "./pages/Stats";
 import Settings from "./pages/Settings";
+import GithubCallback from "./pages/GithubCallback";
 import AdminDashboard from "./pages/admin/Dashboard";
 import AdminUsers from "./pages/admin/Users";
 import AdminUserDetail from "./pages/admin/UserDetail";
@@ -28,17 +29,16 @@ export default function App() {
     </div>
   );
 
-  if (!user) return (
-    <Routes>
-      <Route path="/register" element={<RegisterPage onRegister={(u) => u ? login(u) : null} />} />
-      <Route path="*" element={<LoginPage onLogin={(u) => u ? login(u) : null} />} />
-    </Routes>
-  );
-
   return (
-    <AppDataProvider user={user}>
-      <Routes>
-        <Route element={<Layout onLogout={logout} />}>
+    <Routes>
+      <Route path="/github-callback" element={<GithubCallback />} />
+      {!user ? (
+        <>
+          <Route path="/register" element={<RegisterPage onRegister={(u) => u ? login(u) : null} />} />
+          <Route path="*" element={<LoginPage onLogin={(u) => u ? login(u) : null} />} />
+        </>
+      ) : (
+        <Route element={<AppDataProvider user={user}><Layout onLogout={logout} /></AppDataProvider>}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/problems" element={<ProblemList />} />
           <Route path="/add" element={<AddProblem />} />
@@ -50,7 +50,7 @@ export default function App() {
           <Route path="/admin/users/:id" element={<RequireAdmin><AdminUserDetail /></RequireAdmin>} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Route>
-      </Routes>
-    </AppDataProvider>
+      )}
+    </Routes>
   );
 }
