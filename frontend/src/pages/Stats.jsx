@@ -1,7 +1,5 @@
-import { Download } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import Card from "../components/Card";
-import Btn from "../components/Btn";
 import { OUTCOMES, TOPICS } from "../lib/constants";
 
 export default function Stats({ problems, stats, history }) {
@@ -10,17 +8,10 @@ export default function Stats({ problems, stats, history }) {
   const last30 = Array.from({ length: 30 }, (_, i) => { const d = new Date(); d.setDate(d.getDate() - (29 - i)); return d.toISOString().split("T")[0]; });
   const histMap = Object.fromEntries(history.map(h => [h.date, h.count]));
 
-  const exportData = () => {
-    const exp = { generatedBy: "DSA Tracker", generatedAt: new Date().toISOString(), problems: problems.map(({ notes, keyInsight, ...rest }) => rest) };
-    const blob = new Blob([JSON.stringify(exp, null, 2)], { type: "application/json" });
-    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "dsa-problems.json"; a.click();
-  };
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-mono font-bold text-white">Stats</h1>
-        <Btn onClick={exportData} variant="ghost"><Download size={13} />Export</Btn>
       </div>
 
       <div className="grid grid-cols-3 gap-3">

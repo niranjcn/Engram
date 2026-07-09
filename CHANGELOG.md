@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Removed
+
+- JSON export button from Stats page
+
 ## v1.0.0 (2026-07-09)
 
 Initial release of **Engram** — a spaced-repetition DSA study tracker.
