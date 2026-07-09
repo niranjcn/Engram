@@ -12,6 +12,7 @@ html, body, #root {
   height: 100%;
   background: #0A0E1A;
   color: #e2e8f0;
+  overflow-x: hidden;
 }
 
 .spinner {

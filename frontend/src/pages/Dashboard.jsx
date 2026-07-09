@@ -71,14 +71,14 @@ export default function Dashboard() {
             const stage = getStage(p);
             const sm = STAGE_META[stage];
             return (
-              <Card key={p.id} className="px-4 py-3 flex items-center justify-between">
+              <Card key={p.id} className="px-4 py-3 flex items-center gap-2 flex-wrap justify-between">
                 <div className="flex items-center gap-2 min-w-0">
                   <span className="text-xs font-mono" style={{ color: sm.color }}>{sm.emoji}</span>
                   <span className="text-sm text-gray-300 font-mono truncate">{p.title}</span>
                   <Badge color={DIFF_COLOR[p.difficulty]}>{p.difficulty}</Badge>
                   {d <= 3 && <Badge color="#F59E0B">Soon</Badge>}
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-2">
                   <span className="text-xs text-gray-500 font-mono">{d}d</span>
                   <span className="text-xs text-gray-600">{p.nextReviewDate}</span>
                 </div>
@@ -94,7 +94,7 @@ export default function Dashboard() {
         </h2>
         <div className="space-y-2">
           {mastered.map(p => (
-            <Card key={p.id} className="px-4 py-3 flex items-center justify-between border-emerald-900/20">
+            <Card key={p.id} className="px-4 py-3 flex items-center gap-2 flex-wrap justify-between border-emerald-900/20">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-sm text-gray-300 font-mono">{p.title}</span>
                 <Badge color={DIFF_COLOR[p.difficulty]}>{p.difficulty}</Badge>
@@ -114,7 +114,7 @@ export default function Dashboard() {
         </h2>
         <div className="space-y-2">
           {frozen.map(p => (
-            <Card key={p.id} className="px-4 py-3 flex items-center justify-between border-indigo-900/20">
+            <Card key={p.id} className="px-4 py-3 flex items-center gap-2 flex-wrap justify-between border-indigo-900/20">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-sm text-gray-400 font-mono">{p.title}</span>
                 <Badge color={DIFF_COLOR[p.difficulty]}>{p.difficulty}</Badge>

@@ -71,7 +71,7 @@ export default function Stats() {
         <h1 className="text-xl font-mono font-bold text-white">Stats</h1>
       </div>
 
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {[["🔥 Streak", (stats.streak?.current || 0) + " days"], ["🏆 Best", (stats.streak?.longest || 0) + " days"], ["✅ Mastered", stats.mastered || 0 + " problems"]].map(([l,v]) => (
           <Card key={l} className="p-3 text-center">
             <div className="text-lg font-mono font-bold text-white">{v}</div>
