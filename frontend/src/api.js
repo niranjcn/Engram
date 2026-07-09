@@ -115,3 +115,9 @@ export const adminApi = {
   updateRole: (id, role) => patch(`/admin/users/${id}/role`, { role }),
   deleteUser: (id) => del(`/admin/users/${id}`),
 }
+
+// GitHub
+export const githubApi = {
+  config: () => get('/auth/github/config'),
+  connect: (code) => post('/auth/github', { code }),
+}

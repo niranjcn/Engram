@@ -13,7 +13,9 @@
 - `crypto.py` — `encrypt_token()` / `decrypt_token()` using Fernet (derives key from `SECRET_KEY` or explicit `FERNET_KEY`)
 - `github_token_encrypted` and `github_username` fields on UserModel
 - `POST /auth/github` endpoint — exchanges OAuth code for token, stores encrypted on user record
+- `GET /auth/github/config` endpoint — exposes `client_id` to frontend
 - `github_username` exposed in `GET /auth/me` response
+- Settings page: "Connect GitHub" button with OAuth popup flow, shows connected username when linked
 - `_redirects` file with explicit `/assets/*` passthrough before SPA catch-all
 - `_headers` file for cache-control: `index.html` never cached, `/assets/*` cached immutably
 - `AGENTS.md` with project conventions (push policy, auth rules, PWA scope)

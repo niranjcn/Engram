@@ -88,6 +88,14 @@ async def me(current_user: UserModel = Depends(get_current_user)):
     )
 
 
+@router.get("/github/config")
+async def github_config():
+    client_id = os.getenv("GITHUB_CLIENT_ID")
+    if not client_id:
+        raise HTTPException(status_code=400, detail="GitHub OAuth not configured")
+    return {"client_id": client_id}
+
+
 @router.post("/github")
 async def github_auth(data: GitHubAuthRequest, current_user: UserModel = Depends(get_current_user)):
     client_id = os.getenv("GITHUB_CLIENT_ID")
