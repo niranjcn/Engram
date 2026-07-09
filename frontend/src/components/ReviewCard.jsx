@@ -13,10 +13,10 @@ export default function ReviewCard({ problem, onReview }) {
   if (done && !justFrozen) return null;
   if (justFrozen) return (
     <div className="rounded-xl border border-[#23262E] bg-[#16181E] p-3 md:p-4">
-      <div className="flex flex-col items-center gap-2 py-4 text-center">
+      <div className="flex flex-col items-center gap-2 py-4 text-center w-full">
         <span className="text-3xl">❄️</span>
-        <p className="text-[#8B8F96] font-medium text-sm">{problem.title} is now Frozen!</p>
-        <p className="text-xs text-[#5D616C]">You solved it solo 3 times with interval &gt;21 days. It won't appear in reviews anymore.</p>
+        <p className="text-[#8B8F96] font-medium text-sm max-w-full">{problem.title} is now Frozen!</p>
+        <p className="text-xs text-[#5D616C] max-w-full">You solved it solo 3 times with interval &gt;21 days. It won't appear in reviews anymore.</p>
       </div>
     </div>
   );
@@ -24,10 +24,10 @@ export default function ReviewCard({ problem, onReview }) {
   return (
     <div className="rounded-xl border border-[#23262E] bg-[#16181E] p-3 md:p-4 hover:border-[#2A2D35] transition-colors">
       <div className="flex items-start justify-between gap-2 mb-3">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-[#F1F1F3] font-medium text-sm">{problem.title}</span>
-            <span className="text-xs" style={{ color: stageMeta.color }}>{stageMeta.emoji} {stageMeta.label}</span>
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 mb-1 min-w-0">
+            <span className="text-[#F1F1F3] font-medium text-sm truncate">{problem.title}</span>
+            <span className="text-xs shrink-0" style={{ color: stageMeta.color }}>{stageMeta.emoji} {stageMeta.label}</span>
           </div>
           <div className="flex gap-1.5 flex-wrap">
             <Badge color={DIFF_COLOR[problem.difficulty]}>{problem.difficulty}</Badge>

@@ -105,14 +105,14 @@ export default function Dashboard() {
         <div className="space-y-1.5 md:space-y-2">
           {mastered.map(p => (
             <div key={p.id} className="rounded-xl border border-[#23262E] bg-[#16181E] px-3 md:px-4 py-2.5 md:py-3 flex items-center gap-2 flex-wrap justify-between hover:border-[#2A2D35] transition-colors">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-sm text-[#F1F1F3]">{p.title}</span>
+              <div className="flex items-center gap-2 flex-wrap min-w-0">
+                <span className="text-sm text-[#F1F1F3] truncate">{p.title}</span>
                 <Badge color={DIFF_COLOR[p.difficulty]}>{p.difficulty}</Badge>
                 <Badge color="#3B82F6">{p.topic}</Badge>
                 <Badge color="#22C55E">interval {p.interval}d</Badge>
                 {p.soloStreak > 0 && <Badge color="#818CF8">🔥 {p.soloStreak}/3 solo streak</Badge>}
               </div>
-              <span className="text-xs text-[#5D616C]">next review: {p.nextReviewDate}</span>
+              <span className="text-xs text-[#5D616C] shrink-0">next review: {p.nextReviewDate}</span>
             </div>
           ))}
         </div>
@@ -126,12 +126,12 @@ export default function Dashboard() {
         <div className="space-y-1.5 md:space-y-2">
           {frozen.map(p => (
             <div key={p.id} className="rounded-xl border border-[#23262E] bg-[#16181E] px-3 md:px-4 py-2.5 md:py-3 flex items-center gap-2 flex-wrap justify-between hover:border-[#2A2D35] transition-colors" style={{ opacity: 0.7 }}>
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-sm text-[#F1F1F3]">{p.title}</span>
+              <div className="flex items-center gap-2 flex-wrap min-w-0">
+                <span className="text-sm text-[#F1F1F3] truncate">{p.title}</span>
                 <Badge color={DIFF_COLOR[p.difficulty]}>{p.difficulty}</Badge>
                 <Badge color="#3B82F6">{p.topic}</Badge>
               </div>
-              <span className="text-xs text-[#818CF8]">Frozen</span>
+              <span className="text-xs text-[#818CF8] shrink-0">Frozen</span>
             </div>
           ))}
         </div>
