@@ -141,3 +141,17 @@ async def sync(current_user: UserModel = Depends(get_current_user)):
     db = await get_db()
     await sync_user_problems(db, current_user.id)
     return {"ok": True, "files": ["problems.json", "PROBLEMS.md"]}
+
+
+@router.post("/disconnect")
+async def disconnect(current_user: UserModel = Depends(get_current_user)):
+    db = await get_db()
+    await db.users.update_one(
+        {"_id": ObjectId(current_user.id)},
+        {"$unset": {
+            "github_token_encrypted": "",
+            "github_username": "",
+            "github_repo": "",
+        }},
+    )
+    return {"ok": True}

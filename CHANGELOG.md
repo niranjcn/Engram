@@ -21,6 +21,8 @@
 - `POST /github/sync` endpoint — pushes `problems.json` and `PROBLEMS.md` to the repo (creates or updates via Content API)
 - `github_repo` field on UserModel and UserResponse
 - Auto-sync to GitHub after `POST /problems`, `PUT /problems`, and `DELETE /problems` (silent no-op if GitHub not connected)
+- `POST /github/disconnect` endpoint — clears github token/username/repo from user record
+- Settings: "Setup Repository", "Force Sync", and "Disconnect" buttons with loading/error/success states
 - `_redirects` file with explicit `/assets/*` passthrough before SPA catch-all
 - `_headers` file for cache-control: `index.html` never cached, `/assets/*` cached immutably
 - `AGENTS.md` with project conventions (push policy, auth rules, PWA scope)
