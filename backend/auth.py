@@ -12,7 +12,7 @@ SECRET_KEY = os.environ.get("SECRET_KEY")
 if not SECRET_KEY:
     raise RuntimeError("SECRET_KEY environment variable is required")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_DAYS = 7
+ACCESS_TOKEN_EXPIRE_HOURS = 5
 COOKIE_NAME = "access_token"
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -29,7 +29,7 @@ def verify_password(plain: str, hashed: str) -> bool:
 
 def create_access_token(data: dict) -> str:
     to_encode = data.copy()
-    expire = int((datetime.utcnow() + timedelta(days=ACCESS_TOKEN_EXPIRE_DAYS)).timestamp())
+    expire = int((datetime.utcnow() + timedelta(hours=ACCESS_TOKEN_EXPIRE_HOURS)).timestamp())
     to_encode.update({"exp": expire})
     token = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     if isinstance(token, bytes):
