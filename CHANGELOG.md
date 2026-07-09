@@ -13,6 +13,7 @@
 - `_headers` file for cache-control: `index.html` never cached, `/assets/*` cached immutably
 - `AGENTS.md` with project conventions (push policy, auth rules, PWA scope)
 - SW v2: navigation requests always go to network first (no more stale `index.html`), only static assets are cached
+- Inline script moved to external `update-handler.js` to avoid CSP violation
 
 - Admin system — full backend API (`/admin/dashboard`, `/admin/users`, `/admin/users/:id`, activity, problems, role management, delete) with admin-only sidebar link and RequireAdmin guard
 - Admin Dashboard — metric cards (users, problems, reviews, streaks), difficulty/topic breakdown, monthly registrations

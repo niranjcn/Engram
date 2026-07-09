@@ -1,7 +1,7 @@
 # Project Instructions
 
 ## Git
-- Never push to GitHub without explicit user consent.
+- Never push,add or commit to GitHub without explicit user consent.
 - Always ask before pushing.
 - Changelog must be updated before each push.
 
