@@ -17,8 +17,7 @@ export default function RegisterPage({ onRegister }) {
     if (password !== confirm) { setError("Passwords do not match"); return; }
     setBusy(true);
     try {
-      const res = await auth.register(email, username, password);
-      localStorage.setItem("token", res.access_token);
+      await auth.register(email, username, password);
       const user = await auth.me();
       onRegister(user);
     } catch (err) { setError(err.message); setBusy(false); }

@@ -2,42 +2,46 @@
 
 ## Unreleased
 
-### Removed
+### Added
 
-- JSON export button from Stats page
-- Card component wrappers from Dashboard sections, Stats charts, ProblemList rows, ReviewCard, Add/Edit forms, and Settings page — replaced with bare surface divs
-- Day labels and day-label column from desktop heatmap
-- `max-w-2xl` content constraint — switched to full-width `max-w-7xl`
+- Admin system — full backend API (`/admin/dashboard`, `/admin/users`, `/admin/users/:id`, activity, problems, role management, delete) with admin-only sidebar link and RequireAdmin guard
+- Admin Dashboard — metric cards (users, problems, reviews, streaks), difficulty/topic breakdown, monthly registrations
+- Admin Users page — searchable, sortable table with promote/demote/delete
+- Admin User Detail page — profile header, stats cards, LeetCode-style heatmap, read-only problem list with expandable notes
+- Admin seeded on first startup via `ADMIN_EMAIL`/`ADMIN_USERNAME`/`ADMIN_PASSWORD` env vars (bcrypt-hashed)
+- `require_admin` FastAPI dependency — checks `current_user.role == "admin"`
+- `role` field on UserModel and `/auth/me` response
+- Shared Heatmap component — LeetCode-style 12-month contribution graph (green, column-major, tooltips, keyboard nav)
+- `POST /auth/logout` endpoint — clears httpOnly cookie
+- Rate limiting on `/auth/login` and `/auth/register` — 10 req/min per IP (configurable via `RATE_LIMIT_PER_MINUTE`)
+- Content-Security-Policy via meta tag, backend middleware, and Netlify headers
+- HSTS header (`max-age=31536000; includeSubDomains`)
+- Favicon (branded brain icon in dark square)
 
 ### Changed
 
-- Restructured to React Router — URL-based routing instead of manual `view` state
-- Created shared Layout component (sidebar on desktop, bottom nav on mobile)
-- Login/Register now use `/login` and `/register` routes instead of `showRegister` toggle
-- Edit problem now uses `/edit/:id` URL param instead of `editProblem` state
-- Extracted `useAuth` hook — auth logic moved out of App.jsx
-- Created `AppDataContext` with `useAppData` hook — pages fetch data directly instead of props
-- Pages (Dashboard, ProblemList, Stats, Add, Edit) now use hooks internally
-- Edit problem no longer submits a review — only updates fields
-- Complete visual redesign — professional dark theme (#0B0D12 bg, #16181E surfaces, #3B82F6 accent)
-- Brand renamed from "DSA Tracker" to "Engram"
-- Accent color switched from indigo to blue (#3B82F6)
-- Sidebar simplified with cleaner nav and compact stats
-- Bottom nav adjusted for mobile safe-area (iPhone home indicator)
-- Heatmap rebuilt as LeetCode-style independent month grids — each month starts from the 1st with correct day-of-week offset
-- Current month heatmap caps at today's date (shows no future cells)
-- Heatmap month labels and grid are now centered in container
-- Login/Register pages redesigned with centered brand block and form card
-- Form inputs, buttons, badges, and selects updated to new theme colors
-- All pages use responsive spacing: tighter on mobile (`space-y-5`, `p-3`), roomier on desktop (`space-y-8`, `p-4`)
-- ProblemList action buttons smaller on mobile (`p-1`, 12px icons)
-- Bottom padding added to content area to prevent overlap with mobile nav
-- `overflow-x: hidden` added to html/body to prevent layout viewport expansion on mobile
-- Vite config: added watch.usePolling for Docker file-change detection
+- JWT auth migrated from `localStorage` + `Authorization` header to httpOnly, Secure, SameSite=None/Lax cookie — token is invisible to JavaScript
+- `get_current_user` reads JWT from cookie first, falls back to `Authorization` header
+- Frontend fetch calls use `credentials: 'include'` for cross-origin cookie support
+- All `localStorage` token read/write removed from frontend (`useAuth`, `LoginPage`, `RegisterPage`, `api.js`)
+- CORS `allow_headers` restricted to `Content-Type, Authorization, Accept`; `allow_methods` restricted to specific verbs
+- `load_dotenv()` consolidated — removed from `auth.py` and `database.py`, called only in `main.py`
+- Admin startup log no longer exposes admin email
+- Stats page uses shared Heatmap component (inline HeatmapGrid removed)
+- Admin UserDetail heatmap now matches the Stats page LeetCode style exactly
+- Admin UserDetail problems list enhanced — now shows difficulty badges, topic, last outcome, solo streak, URL link, expandable notes/key insight
+- Admin Users sort by "Streak" now resolves to `streak.current` instead of comparing the object
+- Registration always sets `role: "user"` (admin created via env-seeded startup)
+- Title changed to "Engram" in index.html
 
-### Added
+### Removed
 
-- Settings page (empty shell, ready for v2 features)
+- JSON export button from Stats page
+- Card component wrappers from Dashboard sections, Stats charts, ProblemList rows, ReviewCard, Add/Edit forms, and Settings page
+- Day labels and day-label column from desktop heatmap
+- `max-w-2xl` content constraint
+- Legacy inline HeatmapGrid component from Stats.jsx
+- `load_dotenv()` calls from `auth.py` and `database.py`
 
 ## v1.0.0 (2026-07-09)
 

@@ -8,6 +8,7 @@ class UserModel(BaseModel):
     email: str
     username: str
     password_hash: str
+    role: str = "user"
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 

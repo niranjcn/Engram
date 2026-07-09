@@ -1,10 +1,15 @@
 const BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
 function headers() {
-  const token = localStorage.getItem('token')
+  return { 'Content-Type': 'application/json' }
+}
+
+function opts(method, body) {
   return {
-    'Content-Type': 'application/json',
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    method,
+    headers: headers(),
+    credentials: 'include',
+    ...(body ? { body: JSON.stringify(body) } : {}),
   }
 }
 
@@ -15,36 +20,30 @@ async function handleResponse(res) {
 }
 
 function get(path) {
-  return fetch(`${BASE}${path}`, { headers: headers() }).then(handleResponse)
+  return fetch(`${BASE}${path}`, opts('GET')).then(handleResponse)
 }
 
 function post(path, body) {
-  return fetch(`${BASE}${path}`, {
-    method: 'POST',
-    headers: headers(),
-    body: JSON.stringify(body),
-  }).then(handleResponse)
+  return fetch(`${BASE}${path}`, opts('POST', body)).then(handleResponse)
 }
 
 function put(path, body) {
-  return fetch(`${BASE}${path}`, {
-    method: 'PUT',
-    headers: headers(),
-    body: JSON.stringify(body),
-  }).then(handleResponse)
+  return fetch(`${BASE}${path}`, opts('PUT', body)).then(handleResponse)
 }
 
 function del(path) {
-  return fetch(`${BASE}${path}`, {
-    method: 'DELETE',
-    headers: headers(),
-  }).then(handleResponse)
+  return fetch(`${BASE}${path}`, opts('DELETE')).then(handleResponse)
+}
+
+function patch(path, body) {
+  return fetch(`${BASE}${path}`, opts('PATCH', body)).then(handleResponse)
 }
 
 // Auth
 export const auth = {
   login: (email, password) => post('/auth/login', { email, password }),
   register: (email, username, password) => post('/auth/register', { email, username, password }),
+  logout: () => post('/auth/logout'),
   me: () => get('/auth/me'),
 }
 
@@ -104,4 +103,15 @@ export const problemsApi = {
 export const reviewsApi = {
   history: (days = 30) => get(`/reviews/history?days=${days}`),
   stats: () => get('/reviews/stats'),
+}
+
+// Admin
+export const adminApi = {
+  dashboard: () => get('/admin/dashboard'),
+  users: () => get('/admin/users'),
+  user: (id) => get(`/admin/users/${id}`),
+  userActivity: (id, days = 365) => get(`/admin/users/${id}/activity?days=${days}`),
+  userProblems: (id) => get(`/admin/users/${id}/problems`),
+  updateRole: (id, role) => patch(`/admin/users/${id}/role`, { role }),
+  deleteUser: (id) => del(`/admin/users/${id}`),
 }

@@ -1,21 +1,19 @@
 from datetime import datetime, timedelta
-from dotenv import load_dotenv
 import jwt
 from passlib.context import CryptContext
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from database import get_db
 from models import UserModel
 from bson import ObjectId
 import os
 
-load_dotenv()
-
 SECRET_KEY = os.environ.get("SECRET_KEY")
 if not SECRET_KEY:
     raise RuntimeError("SECRET_KEY environment variable is required")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_DAYS = 7
+COOKIE_NAME = "access_token"
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 security = HTTPBearer(auto_error=False)
@@ -39,12 +37,7 @@ def create_access_token(data: dict) -> str:
     return token
 
 
-async def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
-) -> UserModel:
-    if credentials is None:
-        raise HTTPException(status_code=401, detail="Not authenticated")
-    token = credentials.credentials
+def decode_token(token: str) -> dict:
     try:
         payload = jwt.decode(
             token,
@@ -56,13 +49,34 @@ async def get_current_user(
         user_id: str = payload.get("sub")
         if user_id is None:
             raise HTTPException(status_code=401, detail="Invalid token")
+        return payload
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expired")
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid token")
+
+
+async def get_current_user(
+    request: Request,
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+) -> UserModel:
+    token = None
+    if credentials is not None:
+        token = credentials.credentials
+    if not token:
+        token = request.cookies.get(COOKIE_NAME)
+    if not token:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    payload = decode_token(token)
     db = await get_db()
-    doc = await db.users.find_one({"_id": ObjectId(user_id)})
+    doc = await db.users.find_one({"_id": ObjectId(payload["sub"])})
     if doc is None:
         raise HTTPException(status_code=401, detail="User not found")
     doc["id"] = str(doc.pop("_id"))
     return UserModel(**doc)
+
+
+async def require_admin(current_user: UserModel = Depends(get_current_user)) -> UserModel:
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return current_user

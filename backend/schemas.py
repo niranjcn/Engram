@@ -30,6 +30,7 @@ class UserResponse(BaseModel):
     id: str
     email: str
     username: str
+    role: str
     created_at: datetime
 
 

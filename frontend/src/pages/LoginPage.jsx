@@ -12,8 +12,7 @@ export default function LoginPage({ onLogin }) {
   const handleSubmit = async (e) => {
     e.preventDefault(); setError(""); setBusy(true);
     try {
-      const res = await auth.login(email, password);
-      localStorage.setItem("token", res.access_token);
+      await auth.login(email, password);
       const user = await auth.me();
       onLogin(user);
     } catch (err) { setError(err.message); setBusy(false); }

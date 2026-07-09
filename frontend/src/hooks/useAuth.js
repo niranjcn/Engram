@@ -6,13 +6,10 @@ export default function useAuth() {
   const [authLoading, setAuthLoading] = useState(true);
 
   const checkAuth = useCallback(async () => {
-    const token = localStorage.getItem("token");
-    if (!token) { setUser(null); setAuthLoading(false); return; }
     try {
       const u = await auth.me();
       setUser(u);
     } catch {
-      localStorage.removeItem("token");
       setUser(null);
     } finally {
       setAuthLoading(false);
@@ -22,7 +19,11 @@ export default function useAuth() {
   useEffect(() => { checkAuth(); }, [checkAuth]);
 
   const login = (userData) => setUser(userData);
-  const logout = () => { localStorage.removeItem("token"); setUser(null); };
+
+  const logout = async () => {
+    try { await auth.logout(); } catch {}
+    setUser(null);
+  };
 
   return { user, authLoading, login, logout };
 }

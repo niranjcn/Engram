@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { Brain } from "lucide-react";
 import Layout from "./components/Layout";
+import RequireAdmin from "./components/RequireAdmin";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import Dashboard from "./pages/Dashboard";
@@ -9,6 +10,9 @@ import AddProblem from "./pages/AddProblem";
 import EditProblem from "./pages/EditProblem";
 import Stats from "./pages/Stats";
 import Settings from "./pages/Settings";
+import AdminDashboard from "./pages/admin/Dashboard";
+import AdminUsers from "./pages/admin/Users";
+import AdminUserDetail from "./pages/admin/UserDetail";
 import useAuth from "./hooks/useAuth";
 import { AppDataProvider } from "./context/AppDataContext";
 
@@ -41,6 +45,9 @@ export default function App() {
           <Route path="/edit/:id" element={<EditProblem />} />
           <Route path="/stats" element={<Stats />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/admin" element={<RequireAdmin><AdminDashboard /></RequireAdmin>} />
+          <Route path="/admin/users" element={<RequireAdmin><AdminUsers /></RequireAdmin>} />
+          <Route path="/admin/users/:id" element={<RequireAdmin><AdminUserDetail /></RequireAdmin>} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Route>
       </Routes>

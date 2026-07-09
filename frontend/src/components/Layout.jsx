@@ -1,10 +1,12 @@
 import { Outlet, NavLink } from "react-router-dom";
-import { Brain, Home, List, Plus, BarChart2, Settings as SettingsIcon } from "lucide-react";
+import { Brain, Home, List, Plus, BarChart2, Settings as SettingsIcon, Shield } from "lucide-react";
 import { useAppData } from "../context/AppDataContext";
+import useAuth from "../hooks/useAuth";
 import { today } from "../lib/utils";
 
 export default function Layout({ onLogout }) {
   const { problems, stats, loading } = useAppData();
+  const { user } = useAuth();
   const todayStr = today();
   const dueCount = problems.filter(p => p.nextReviewDate <= todayStr).length;
 
@@ -41,6 +43,12 @@ export default function Layout({ onLogout }) {
             <SettingsIcon size={18} />
             Settings
           </NavLink>
+          {user?.role === "admin" && (
+            <NavLink to="/admin" end className={linkClass}>
+              <Shield size={18} />
+              Admin
+            </NavLink>
+          )}
         </nav>
         <div className="flex items-center justify-between px-2 pt-4 border-t border-[#23262E]/60">
           <div className="flex items-center gap-2">
