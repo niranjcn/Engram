@@ -5,6 +5,7 @@ import { OUTCOME_OPTIONS, TOPICS, DIFFICULTIES } from "../lib/constants";
 import { getNextReviewPreview } from "../lib/utils";
 
 export default function ProblemForm({ onSave, onCancel, initial }) {
+  const isEditing = !!initial;
   const blank = { title:"", url:"", topic:"Array", difficulty:"Medium", notes:"", keyInsight:"", outcome: "solved_solo" };
   const [form, setForm] = useState({ ...blank, ...(initial || {}), outcome: initial?.lastOutcome || "solved_solo" });
   const set = k => e => setForm(f => ({ ...f, [k]: e.target.value }));
@@ -30,7 +31,7 @@ export default function ProblemForm({ onSave, onCancel, initial }) {
         <div><label className="text-xs text-gray-400 mb-1 block font-mono uppercase tracking-wider">Difficulty</label>
           <select className={inp} value={form.difficulty} onChange={set("difficulty")}>{DIFFICULTIES.map(d => <option key={d}>{d}</option>)}</select></div>
       </div>
-      <div>
+      {!isEditing && <div>
         <label className="text-xs text-gray-400 mb-1 block font-mono uppercase tracking-wider">How did you solve it?</label>
         <select className={inp} value={form.outcome} onChange={set("outcome")}>
           {OUTCOME_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
@@ -42,7 +43,7 @@ export default function ProblemForm({ onSave, onCancel, initial }) {
             Next review in <strong>{preview.interval} day{preview.interval !== 1 ? "s" : ""}</strong> → {preview.date}
           </span>
         </div>
-      </div>
+      </div>}
       <div><label className="text-xs text-gray-400 mb-1 block font-mono uppercase tracking-wider">Notes</label>
         <textarea className={inp + " resize-none"} rows={3} value={form.notes} onChange={set("notes")} placeholder="Your approach, observations..." /></div>
       <div><label className="text-xs text-gray-400 mb-1 block font-mono uppercase tracking-wider">Key Insight</label>

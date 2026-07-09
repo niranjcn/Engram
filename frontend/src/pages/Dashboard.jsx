@@ -4,8 +4,10 @@ import Badge from "../components/Badge";
 import ReviewCard from "../components/ReviewCard";
 import { DIFF_COLOR, STAGE_META } from "../lib/constants";
 import { getStage, today, daysDiff } from "../lib/utils";
+import { useAppData } from "../context/AppDataContext";
 
-export default function Dashboard({ problems, stats, onReview, onRefresh }) {
+export default function Dashboard() {
+  const { problems, stats, reviewProblem, refresh } = useAppData();
   const td = today();
   const due = problems.filter(p => !p.frozen && p.nextReviewDate <= td).sort((a, b) => daysDiff(a.nextReviewDate, b.nextReviewDate));
   const upcoming = problems.filter(p => !p.frozen && p.nextReviewDate > td && daysDiff(p.nextReviewDate, td) <= 7).sort((a, b) => daysDiff(a.nextReviewDate, b.nextReviewDate));
@@ -31,7 +33,7 @@ export default function Dashboard({ problems, stats, onReview, onRefresh }) {
           <h1 className="text-xl font-mono font-bold text-white mb-1">Dashboard</h1>
           <p className="text-sm text-gray-500">{new Date().toLocaleDateString("en-US", { weekday:"long", month:"long", day:"numeric" })}</p>
         </div>
-        <button onClick={onRefresh} className="p-2 rounded-lg bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700 transition-colors cursor-pointer"><RefreshCw size={15} /></button>
+        <button onClick={refresh} className="p-2 rounded-lg bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700 transition-colors cursor-pointer"><RefreshCw size={15} /></button>
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -56,7 +58,7 @@ export default function Dashboard({ problems, stats, onReview, onRefresh }) {
         </h2>
         {due.length === 0
           ? <Card className="p-6 text-center"><p className="text-gray-500 text-sm">🎉 Nothing due today. Add a problem or come back tomorrow!</p></Card>
-          : <div className="space-y-3">{due.map(p => <ReviewCard key={p.id} problem={p} onReview={onReview} />)}</div>}
+          : <div className="space-y-3">{due.map(p => <ReviewCard key={p.id} problem={p} onReview={reviewProblem} />)}</div>}
       </div>
 
       {upcoming.length > 0 && <div>

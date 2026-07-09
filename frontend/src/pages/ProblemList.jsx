@@ -1,11 +1,15 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Search, ChevronRight, ChevronDown, X, ExternalLink, RefreshCw } from "lucide-react";
 import Card from "../components/Card";
 import Badge from "../components/Badge";
 import { OUTCOMES, DIFF_COLOR, STAGE_META, TOPICS, DIFFICULTIES, safeUrl } from "../lib/constants";
 import { getStage, today, daysDiff } from "../lib/utils";
+import { useAppData } from "../context/AppDataContext";
 
-export default function ProblemList({ problems, onDelete, onEdit, onUnfreeze }) {
+export default function ProblemList() {
+  const navigate = useNavigate();
+  const { problems, deleteProblem, unfreezeProblem } = useAppData();
   const [search, setSearch] = useState("");
   const [topicF, setTopicF] = useState("All");
   const [diffF, setDiffF] = useState("All");
@@ -29,6 +33,12 @@ export default function ProblemList({ problems, onDelete, onEdit, onUnfreeze }) 
   );
 
   const sel = "bg-gray-800 border border-gray-700 rounded-lg px-2 py-1.5 text-xs text-gray-300 focus:outline-none focus:border-indigo-500";
+
+  const handleDelete = (id) => {
+    const confirmed = window.confirm("Delete this problem?");
+    if (!confirmed) return;
+    deleteProblem(id);
+  };
 
   return (
     <div className="space-y-4">
@@ -97,9 +107,9 @@ export default function ProblemList({ problems, onDelete, onEdit, onUnfreeze }) 
                       title="Show notes">{expandedNotes[p.id] ? <ChevronDown size={14} /> : <ChevronRight size={14} />}</button>
                   ) : null}
                   {p.frozen
-                    ? <button onClick={() => onUnfreeze(p.id)} className="p-1.5 rounded text-indigo-400 hover:text-white hover:bg-indigo-800/40 transition-colors" title="Unfreeze — add back to reviews"><RefreshCw size={14} /></button>
-                    : <button onClick={() => onEdit(p)} className="p-1.5 rounded text-gray-500 hover:text-blue-400 hover:bg-blue-950/40 transition-colors"><Search size={14} /></button>}
-                  <button onClick={() => onDelete(p.id)} className="p-1.5 rounded text-gray-500 hover:text-red-400 hover:bg-red-950/40 transition-colors"><X size={14} /></button>
+                    ? <button onClick={() => unfreezeProblem(p.id)} className="p-1.5 rounded text-indigo-400 hover:text-white hover:bg-indigo-800/40 transition-colors" title="Unfreeze — add back to reviews"><RefreshCw size={14} /></button>
+                    : <button onClick={() => navigate(`/edit/${p.id}`)} className="p-1.5 rounded text-gray-500 hover:text-blue-400 hover:bg-blue-950/40 transition-colors"><Search size={14} /></button>}
+                  <button onClick={() => handleDelete(p.id)} className="p-1.5 rounded text-gray-500 hover:text-red-400 hover:bg-red-950/40 transition-colors"><X size={14} /></button>
                 </div>
               </div>
               {expandedNotes[p.id] && (
