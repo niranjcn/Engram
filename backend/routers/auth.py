@@ -8,10 +8,14 @@ from crypto import encrypt_token
 from bson import ObjectId
 import os
 import httpx
+import secrets
+import time
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 COOKIE_MAX_AGE = 7 * 24 * 60 * 60
+
+_oauth_states: dict[str, float] = {}
 
 
 def _cookie_secure() -> bool:
@@ -95,7 +99,16 @@ async def github_config():
     client_id = os.getenv("GITHUB_CLIENT_ID")
     if not client_id:
         raise HTTPException(status_code=400, detail="GitHub OAuth not configured")
-    return {"client_id": client_id}
+
+    # cleanup expired states (>10 min)
+    now = time.time()
+    expired = [s for s, t in _oauth_states.items() if now - t > 600]
+    for s in expired:
+        del _oauth_states[s]
+
+    state = secrets.token_urlsafe(32)
+    _oauth_states[state] = now
+    return {"client_id": client_id, "state": state}
 
 
 @router.post("/github/language")
@@ -113,6 +126,10 @@ async def github_set_language(data: GitHubLanguageRequest, current_user: UserMod
 
 @router.post("/github")
 async def github_auth(data: GitHubAuthRequest, current_user: UserModel = Depends(get_current_user)):
+    if data.state not in _oauth_states:
+        raise HTTPException(status_code=400, detail="Invalid OAuth state")
+    del _oauth_states[data.state]
+
     client_id = os.getenv("GITHUB_CLIENT_ID")
     client_secret = os.getenv("GITHUB_CLIENT_SECRET")
     if not client_id or not client_secret:

@@ -123,23 +123,36 @@ async def setup_repo(current_user: UserModel = Depends(get_current_user)):
 
     token = decrypt_token(current_user.github_token_encrypted)
     repo_name = "LeetCode"
+    owner = current_user.github_username
 
     async with httpx.AsyncClient() as client:
-        resp = await client.post(
-            "https://api.github.com/user/repos",
-            json={
-                "name": repo_name,
-                "description": "LeetCode solutions synced from Engram",
-                "private": False,
-                "auto_init": True,
-            },
+        # check if repo already exists
+        check = await client.get(
+            f"https://api.github.com/repos/{owner}/{repo_name}",
             headers=_gh_headers(token),
         )
 
-    if resp.status_code == 422:
-        raise HTTPException(status_code=400, detail="Repository name may be invalid or already exists")
-    if resp.status_code != 201:
-        raise HTTPException(status_code=502, detail="Failed to create GitHub repository")
+        if check.status_code == 200:
+            repo_url = check.json()["html_url"]
+        elif check.status_code == 404:
+            # create it
+            resp = await client.post(
+                "https://api.github.com/user/repos",
+                json={
+                    "name": repo_name,
+                    "description": "LeetCode solutions synced from Engram",
+                    "private": False,
+                    "auto_init": True,
+                },
+                headers=_gh_headers(token),
+            )
+            if resp.status_code == 422:
+                raise HTTPException(status_code=400, detail="Repository name may be invalid or already exists")
+            if resp.status_code != 201:
+                raise HTTPException(status_code=502, detail="Failed to create GitHub repository")
+            repo_url = resp.json()["html_url"]
+        else:
+            raise HTTPException(status_code=502, detail="Failed to check or create repository")
 
     db = await get_db()
     await db.users.update_one(
@@ -147,7 +160,7 @@ async def setup_repo(current_user: UserModel = Depends(get_current_user)):
         {"$set": {"github_repo": repo_name}},
     )
 
-    return {"repo": repo_name, "url": resp.json()["html_url"]}
+    return {"repo": repo_name, "url": repo_url}
 
 
 @router.post("/sync")

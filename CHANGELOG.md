@@ -9,6 +9,9 @@
 - Added inline script to auto-reload on failed module/dynamic import (prevents blank page on stale cache)
 
 ### Changed
+- `POST /github/setup-repo` now detects existing `LeetCode` repo (reuses instead of failing)
+- `GET /auth/github/config` now returns a one-time `state` nonce for CSRF protection
+- `POST /auth/github` verifies OAuth `state` before exchanging code
 - `POST /github/setup-repo` now creates a **public** repo named **LeetCode** (was private `engram-{username}`)
 - Sync now creates individual code files (`Two_Sum.py`, etc.) from problem notes instead of just `PROBLEMS.md`
 - `PROBLEMS.md` replaced by `README.md` with clickable file links

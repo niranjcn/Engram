@@ -38,6 +38,7 @@ class UserResponse(BaseModel):
 
 class GitHubAuthRequest(BaseModel):
     code: str
+    state: str
 
 class GitHubLanguageRequest(BaseModel):
     language: str
