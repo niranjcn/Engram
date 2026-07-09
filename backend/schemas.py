@@ -33,6 +33,7 @@ class UserResponse(BaseModel):
     role: str
     created_at: datetime
     github_username: Optional[str] = None
+    github_repo: Optional[str] = None
 
 class GitHubAuthRequest(BaseModel):
     code: str

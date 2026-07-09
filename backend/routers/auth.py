@@ -85,6 +85,7 @@ async def me(current_user: UserModel = Depends(get_current_user)):
         role=current_user.role,
         created_at=current_user.created_at,
         github_username=current_user.github_username,
+        github_repo=current_user.github_repo,
     )
 
 

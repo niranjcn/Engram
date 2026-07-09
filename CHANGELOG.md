@@ -18,7 +18,8 @@
 - Settings page: "Connect GitHub" button with OAuth popup flow, shows connected username when linked
 - `GithubCallback` page — dedicated OAuth callback route that reads `?code=`, sends via `postMessage` to opener, and closes popup
 - `POST /github/setup-repo` endpoint — creates a private `engram-{username}` repo via GitHub API
-- `github_repo` field on UserModel
+- `POST /github/sync` endpoint — pushes `problems.json` and `PROBLEMS.md` to the repo (creates or updates via Content API)
+- `github_repo` field on UserModel and UserResponse
 - `_redirects` file with explicit `/assets/*` passthrough before SPA catch-all
 - `_headers` file for cache-control: `index.html` never cached, `/assets/*` cached immutably
 - `AGENTS.md` with project conventions (push policy, auth rules, PWA scope)
