@@ -1,7 +1,7 @@
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Response, Request
 from models import UserModel
-from schemas import RegisterRequest, LoginRequest, TokenResponse, UserResponse, GitHubAuthRequest
+from schemas import RegisterRequest, LoginRequest, TokenResponse, UserResponse, GitHubAuthRequest, GitHubLanguageRequest
 from auth import hash_password, verify_password, create_access_token, get_current_user, COOKIE_NAME
 from database import get_db
 from crypto import encrypt_token
@@ -86,6 +86,7 @@ async def me(current_user: UserModel = Depends(get_current_user)):
         created_at=current_user.created_at,
         github_username=current_user.github_username,
         github_repo=current_user.github_repo,
+        sync_language=current_user.sync_language,
     )
 
 
@@ -95,6 +96,19 @@ async def github_config():
     if not client_id:
         raise HTTPException(status_code=400, detail="GitHub OAuth not configured")
     return {"client_id": client_id}
+
+
+@router.post("/github/language")
+async def github_set_language(data: GitHubLanguageRequest, current_user: UserModel = Depends(get_current_user)):
+    VALID = frozenset({"python", "javascript", "java", "cpp", "other"})
+    if data.language not in VALID:
+        raise HTTPException(status_code=400, detail="Invalid language")
+    db = await get_db()
+    await db.users.update_one(
+        {"_id": ObjectId(current_user.id)},
+        {"$set": {"sync_language": data.language}},
+    )
+    return {"ok": True}
 
 
 @router.post("/github")

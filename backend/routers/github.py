@@ -8,12 +8,27 @@ from motor.motor_asyncio import AsyncIOMotorDatabase
 import httpx
 import json
 import base64
+import re
 
 router = APIRouter(prefix="/github", tags=["github"])
+
+_EXTENSIONS = {
+    "python": ".py",
+    "javascript": ".js",
+    "java": ".java",
+    "cpp": ".cpp",
+    "other": ".txt",
+}
 
 
 def _gh_headers(token: str) -> dict:
     return {"Authorization": f"Bearer {token}", "Accept": "application/json"}
+
+
+def _sanitize_filename(title: str) -> str:
+    name = re.sub(r'[^\w\s-]', '', title).strip()
+    name = re.sub(r'[-\s]+', '_', name)
+    return name
 
 
 async def _get_sha(client, owner: str, repo: str, path: str, token: str) -> str | None:
@@ -39,7 +54,7 @@ async def _push_file(client, owner: str, repo: str, path: str, content: str, tok
         json=body,
         headers=_gh_headers(token),
     )
-    return resp.status_code in (201, 200)
+    return resp.status_code in (201, 200), resp
 
 
 async def sync_user_problems(db: AsyncIOMotorDatabase, user_id: str):
@@ -49,52 +64,77 @@ async def sync_user_problems(db: AsyncIOMotorDatabase, user_id: str):
     encrypted_token = user.get("github_token_encrypted")
     github_username = user.get("github_username")
     github_repo = user.get("github_repo")
+    sync_language = user.get("sync_language", "python")
     if not encrypted_token or not github_username or not github_repo:
         return
 
     token = decrypt_token(encrypted_token)
     owner = github_username
     repo = github_repo
+    ext = _EXTENSIONS.get(sync_language, ".txt")
 
     cursor = db.problems.find({"user_id": user_id})
     problems = await cursor.to_list(length=None)
 
-    problems_json = json.dumps([{
-        "title": p["title"],
-        "url": p.get("url"),
-        "topic": p["topic"],
-        "difficulty": p["difficulty"],
-        "notes": p.get("notes"),
-        "key_insight": p.get("key_insight"),
-        "interval": p["interval"],
-        "ease_factor": p["ease_factor"],
-        "repetitions": p["repetitions"],
-        "solo_streak": p["solo_streak"],
-        "frozen": p.get("frozen", False),
-        "last_outcome": p.get("last_outcome"),
-        "next_review_date": str(p["next_review_date"]),
-        "date_added": str(p["date_added"]),
-    } for p in problems], indent=2)
-
-    md_lines = [
-        "# DSA Problems",
-        "",
-        f"Total: **{len(problems)}** problems",
-        "",
-        "| # | Title | Topic | Difficulty | Notes |",
-        "|---|-------|-------|------------|-------|",
-    ]
-    for i, p in enumerate(problems, 1):
-        title = p["title"]
-        topic = p["topic"]
-        diff = p["difficulty"]
-        notes = (p.get("notes") or "")[:60]
-        md_lines.append(f"| {i} | {title} | {topic} | {diff} | {notes} |")
-    problems_md = "\n".join(md_lines)
+    synced_files = []
 
     async with httpx.AsyncClient() as client:
-        await _push_file(client, owner, repo, "problems.json", problems_json, token, "Auto-sync from Engram")
-        await _push_file(client, owner, repo, "PROBLEMS.md", problems_md, token, "Auto-sync from Engram")
+        for p in problems:
+            code = (p.get("notes") or "").strip()
+            if not code:
+                continue
+            filename = _sanitize_filename(p["title"]) + ext
+            ok, _ = await _push_file(
+                client, owner, repo,
+                filename, code, token,
+                f"Add {p['title']}",
+            )
+            if ok:
+                synced_files.append(filename)
+
+        problems_json = json.dumps([{
+            "title": p["title"],
+            "url": p.get("url"),
+            "topic": p["topic"],
+            "difficulty": p["difficulty"],
+            "notes": p.get("notes"),
+            "key_insight": p.get("key_insight"),
+            "interval": p["interval"],
+            "ease_factor": p["ease_factor"],
+            "repetitions": p["repetitions"],
+            "solo_streak": p["solo_streak"],
+            "frozen": p.get("frozen", False),
+            "last_outcome": p.get("last_outcome"),
+            "next_review_date": str(p["next_review_date"]),
+            "date_added": str(p["date_added"]),
+        } for p in problems], indent=2)
+
+        md_lines = [
+            "# LeetCode Solutions",
+            "",
+            f"Total: **{len(problems)}** problems",
+            "",
+            "| # | Title | Topic | Difficulty | File |",
+            "|---|-------|-------|------------|------|",
+        ]
+        for i, p in enumerate(problems, 1):
+            title = p["title"]
+            topic = p["topic"]
+            diff = p["difficulty"]
+            fname = _sanitize_filename(title) + ext
+            is_code = bool((p.get("notes") or "").strip())
+            file_link = f"[{fname}]({fname})" if is_code else "-"
+            md_lines.append(f"| {i} | {title} | {topic} | {diff} | {file_link} |")
+        problems_md = "\n".join(md_lines)
+
+        ok, _ = await _push_file(client, owner, repo, "problems.json", problems_json, token, "Sync problem data")
+        if ok:
+            synced_files.append("problems.json")
+        ok, _ = await _push_file(client, owner, repo, "README.md", problems_md, token, "Update solution list")
+        if ok:
+            synced_files.append("README.md")
+
+    return synced_files
 
 
 @router.post("/setup-repo")
@@ -103,15 +143,15 @@ async def setup_repo(current_user: UserModel = Depends(get_current_user)):
         raise HTTPException(status_code=400, detail="GitHub not connected. Connect via Settings first.")
 
     token = decrypt_token(current_user.github_token_encrypted)
-    repo_name = f"engram-{current_user.github_username}"
+    repo_name = "LeetCode"
 
     async with httpx.AsyncClient() as client:
         resp = await client.post(
             "https://api.github.com/user/repos",
             json={
                 "name": repo_name,
-                "description": "DSA problems synced from Engram",
-                "private": True,
+                "description": "LeetCode solutions synced from Engram",
+                "private": False,
                 "auto_init": True,
             },
             headers=_gh_headers(token),
@@ -139,8 +179,8 @@ async def sync(current_user: UserModel = Depends(get_current_user)):
         raise HTTPException(status_code=400, detail="GitHub repo not set up. Run setup-repo first.")
 
     db = await get_db()
-    await sync_user_problems(db, current_user.id)
-    return {"ok": True, "files": ["problems.json", "PROBLEMS.md"]}
+    files = await sync_user_problems(db, current_user.id)
+    return {"ok": True, "files": files}
 
 
 @router.post("/disconnect")

@@ -34,9 +34,13 @@ class UserResponse(BaseModel):
     created_at: datetime
     github_username: Optional[str] = None
     github_repo: Optional[str] = None
+    sync_language: Optional[str] = None
 
 class GitHubAuthRequest(BaseModel):
     code: str
+
+class GitHubLanguageRequest(BaseModel):
+    language: str
 
 
 class ProblemCreate(BaseModel):

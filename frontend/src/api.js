@@ -120,6 +120,7 @@ export const adminApi = {
 export const githubApi = {
   config: () => get('/auth/github/config'),
   connect: (code) => post('/auth/github', { code }),
+  setLanguage: (language) => post('/auth/github/language', { language }),
   sync: () => post('/github/sync'),
   setupRepo: () => post('/github/setup-repo'),
   disconnect: () => post('/github/disconnect'),

@@ -13,6 +13,7 @@ class UserModel(BaseModel):
     github_token_encrypted: Optional[str] = None
     github_username: Optional[str] = None
     github_repo: Optional[str] = None
+    sync_language: Optional[str] = None
 
 
 class ProblemModel(BaseModel):

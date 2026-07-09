@@ -3,6 +3,13 @@ import useAuth from "../hooks/useAuth";
 import { githubApi } from "../api";
 
 const GITHUB_SCOPE = "repo,read:user";
+const LANGUAGES = [
+  { value: "python", label: "Python (.py)" },
+  { value: "javascript", label: "JavaScript (.js)" },
+  { value: "java", label: "Java (.java)" },
+  { value: "cpp", label: "C++ (.cpp)" },
+  { value: "other", label: "Other (.txt)" },
+];
 
 export default function Settings() {
   const { user } = useAuth();
@@ -10,12 +17,18 @@ export default function Settings() {
   const [connecting, setConnecting] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [settingUp, setSettingUp] = useState(false);
+  const [language, setLanguage] = useState(user?.sync_language || "python");
+  const [savingLang, setSavingLang] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
 
   useEffect(() => {
     githubApi.config().then((c) => setClientId(c.client_id)).catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (user?.sync_language) setLanguage(user.sync_language);
+  }, [user?.sync_language]);
 
   const exchangeCode = useCallback(async (code) => {
     try {
@@ -67,13 +80,29 @@ export default function Settings() {
     }
   }
 
+  async function handleLanguageChange(e) {
+    const val = e.target.value;
+    setLanguage(val);
+    setError(null);
+    setSuccess(null);
+    setSavingLang(true);
+    try {
+      await githubApi.setLanguage(val);
+      setSuccess("Language saved");
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSavingLang(false);
+    }
+  }
+
   async function handleSync() {
     setError(null);
     setSuccess(null);
     setSyncing(true);
     try {
-      await githubApi.sync();
-      setSuccess("Problems synced to GitHub");
+      const res = await githubApi.sync();
+      setSuccess(`Synced ${res.files.length} files to LeetCode`);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -99,7 +128,7 @@ export default function Settings() {
       <div className="rounded-xl border border-[#23262E] bg-[#16181E] p-6">
         <h2 className="text-lg font-medium text-[#F1F1F3] mb-4">GitHub Integration</h2>
         <p className="text-sm text-[#5D616C] mb-4">
-          Connect your GitHub account to automatically sync your problems to a private repository.
+          Connect your GitHub account to sync your solutions to a public LeetCode repository.
         </p>
 
         {user?.github_username ? (
@@ -111,7 +140,9 @@ export default function Settings() {
                 </div>
                 <div>
                   <p className="text-sm font-medium text-[#F1F1F3]">{user.github_username}</p>
-                  <p className="text-xs text-[#5D616C]">Connected</p>
+                  <p className="text-xs text-[#5D616C]">
+                    {user.github_repo ? `Repo: ${user.github_repo}` : "Connected"}
+                  </p>
                 </div>
               </div>
               <button
@@ -122,7 +153,7 @@ export default function Settings() {
               </button>
             </div>
 
-            <div className="flex flex-wrap gap-3 pt-2">
+            <div className="flex flex-wrap items-center gap-4 pt-2">
               {!user.github_repo ? (
                 <button
                   onClick={handleSetupRepo}
@@ -132,13 +163,28 @@ export default function Settings() {
                   {settingUp ? "Setting up..." : "Setup Repository"}
                 </button>
               ) : (
-                <button
-                  onClick={handleSync}
-                  disabled={syncing}
-                  className="px-4 py-2 text-sm font-medium text-white bg-[#23262E] hover:bg-[#2A2D35] border border-[#2A2D35] rounded-lg transition disabled:opacity-50"
-                >
-                  {syncing ? "Syncing..." : "Force Sync"}
-                </button>
+                <>
+                  <div className="flex items-center gap-2">
+                    <label className="text-sm text-[#5D616C]">Language:</label>
+                    <select
+                      value={language}
+                      onChange={handleLanguageChange}
+                      disabled={savingLang}
+                      className="bg-[#23262E] border border-[#2A2D35] text-[#F1F1F3] text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#3B82F6]"
+                    >
+                      {LANGUAGES.map((l) => (
+                        <option key={l.value} value={l.value}>{l.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <button
+                    onClick={handleSync}
+                    disabled={syncing}
+                    className="px-4 py-2 text-sm font-medium text-white bg-[#23262E] hover:bg-[#2A2D35] border border-[#2A2D35] rounded-lg transition disabled:opacity-50"
+                  >
+                    {syncing ? "Syncing..." : "Force Sync"}
+                  </button>
+                </>
               )}
             </div>
 

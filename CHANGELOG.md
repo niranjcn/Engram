@@ -8,7 +8,16 @@
 - Added `mobile-web-app-capable` meta tag alongside `apple-mobile-web-app-capable`
 - Added inline script to auto-reload on failed module/dynamic import (prevents blank page on stale cache)
 
+### Changed
+- `POST /github/setup-repo` now creates a **public** repo named **LeetCode** (was private `engram-{username}`)
+- Sync now creates individual code files (`Two_Sum.py`, etc.) from problem notes instead of just `PROBLEMS.md`
+- `PROBLEMS.md` replaced by `README.md` with clickable file links
+- Renamed encryption env var from `FERNET_KEY` to `GITHUB_TOKEN_ENCRYPTION_KEY`
+
 ### Added
+- `sync_language` field on UserModel — stores code file extension preference
+- `POST /auth/github/language` endpoint — saves language choice (python, javascript, java, cpp, other)
+- Settings: language selector dropdown saves preference, sync creates code files in chosen language
 - `cryptography` and `httpx` dependencies
 - `crypto.py` — `encrypt_token()` / `decrypt_token()` using Fernet (derives key from `SECRET_KEY` or explicit `FERNET_KEY`)
 - `github_token_encrypted` and `github_username` fields on UserModel
