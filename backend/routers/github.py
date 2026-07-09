@@ -6,7 +6,6 @@ from database import get_db
 from bson import ObjectId
 from motor.motor_asyncio import AsyncIOMotorDatabase
 import httpx
-import json
 import base64
 import re
 
@@ -92,23 +91,6 @@ async def sync_user_problems(db: AsyncIOMotorDatabase, user_id: str):
             if ok:
                 synced_files.append(filename)
 
-        problems_json = json.dumps([{
-            "title": p["title"],
-            "url": p.get("url"),
-            "topic": p["topic"],
-            "difficulty": p["difficulty"],
-            "notes": p.get("notes"),
-            "key_insight": p.get("key_insight"),
-            "interval": p["interval"],
-            "ease_factor": p["ease_factor"],
-            "repetitions": p["repetitions"],
-            "solo_streak": p["solo_streak"],
-            "frozen": p.get("frozen", False),
-            "last_outcome": p.get("last_outcome"),
-            "next_review_date": str(p["next_review_date"]),
-            "date_added": str(p["date_added"]),
-        } for p in problems], indent=2)
-
         md_lines = [
             "# LeetCode Solutions",
             "",
@@ -127,9 +109,6 @@ async def sync_user_problems(db: AsyncIOMotorDatabase, user_id: str):
             md_lines.append(f"| {i} | {title} | {topic} | {diff} | {file_link} |")
         problems_md = "\n".join(md_lines)
 
-        ok, _ = await _push_file(client, owner, repo, "problems.json", problems_json, token, "Sync problem data")
-        if ok:
-            synced_files.append("problems.json")
         ok, _ = await _push_file(client, owner, repo, "README.md", problems_md, token, "Update solution list")
         if ok:
             synced_files.append("README.md")
