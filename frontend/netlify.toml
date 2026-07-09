@@ -11,12 +11,6 @@
     Referrer-Policy           = "strict-origin-when-cross-origin"
     Strict-Transport-Security = "max-age=31536000; includeSubDomains"
     Content-Security-Policy   = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self' https://*.up.railway.app; frame-ancestors 'none'; form-action 'self'"
-    Cache-Control             = "public, max-age=0, must-revalidate"
-
-[[headers]]
-  for   = "/assets/*"
-  [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
 
 [[redirects]]
   from   = "/*"

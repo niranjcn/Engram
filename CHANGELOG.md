@@ -6,11 +6,12 @@
 - Token expiry reduced from 7 days to 5 hours
 - CSP meta tag `frame-ancestors` removed (ignored in meta, already set in HTTP headers)
 - Added `mobile-web-app-capable` meta tag alongside `apple-mobile-web-app-capable`
+- Added inline script to auto-reload on failed module/dynamic import (prevents blank page on stale cache)
 
 ### Added
-- `_redirects` file in `public/` for more reliable SPA routing on Netlify
+- `_redirects` file with explicit `/assets/*` passthrough before SPA catch-all
+- `_headers` file for cache-control: `index.html` never cached, `/assets/*` cached immutably
 - `AGENTS.md` with project conventions (push policy, auth rules, PWA scope)
-- Cache-Control headers: HTML never cached (`must-revalidate`), assets cached immutably (1 year) for hash-based filenames
 
 - Admin system — full backend API (`/admin/dashboard`, `/admin/users`, `/admin/users/:id`, activity, problems, role management, delete) with admin-only sidebar link and RequireAdmin guard
 - Admin Dashboard — metric cards (users, problems, reviews, streaks), difficulty/topic breakdown, monthly registrations
