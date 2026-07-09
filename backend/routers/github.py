@@ -4,6 +4,7 @@ from auth import get_current_user
 from crypto import decrypt_token
 from database import get_db
 from bson import ObjectId
+from motor.motor_asyncio import AsyncIOMotorDatabase
 import httpx
 import json
 import base64
@@ -39,6 +40,61 @@ async def _push_file(client, owner: str, repo: str, path: str, content: str, tok
         headers=_gh_headers(token),
     )
     return resp.status_code in (201, 200)
+
+
+async def sync_user_problems(db: AsyncIOMotorDatabase, user_id: str):
+    user = await db.users.find_one({"_id": ObjectId(user_id)})
+    if not user:
+        return
+    encrypted_token = user.get("github_token_encrypted")
+    github_username = user.get("github_username")
+    github_repo = user.get("github_repo")
+    if not encrypted_token or not github_username or not github_repo:
+        return
+
+    token = decrypt_token(encrypted_token)
+    owner = github_username
+    repo = github_repo
+
+    cursor = db.problems.find({"user_id": user_id})
+    problems = await cursor.to_list(length=None)
+
+    problems_json = json.dumps([{
+        "title": p["title"],
+        "url": p.get("url"),
+        "topic": p["topic"],
+        "difficulty": p["difficulty"],
+        "notes": p.get("notes"),
+        "key_insight": p.get("key_insight"),
+        "interval": p["interval"],
+        "ease_factor": p["ease_factor"],
+        "repetitions": p["repetitions"],
+        "solo_streak": p["solo_streak"],
+        "frozen": p.get("frozen", False),
+        "last_outcome": p.get("last_outcome"),
+        "next_review_date": str(p["next_review_date"]),
+        "date_added": str(p["date_added"]),
+    } for p in problems], indent=2)
+
+    md_lines = [
+        "# DSA Problems",
+        "",
+        f"Total: **{len(problems)}** problems",
+        "",
+        "| # | Title | Topic | Difficulty | Notes |",
+        "|---|-------|-------|------------|-------|",
+    ]
+    for i, p in enumerate(problems, 1):
+        title = p["title"]
+        topic = p["topic"]
+        diff = p["difficulty"]
+        notes = (p.get("notes") or "")[:60]
+        md_lines.append(f"| {i} | {title} | {topic} | {diff} | {notes} |")
+    problems_md = "\n".join(md_lines)
+
+    async with httpx.AsyncClient() as client:
+        await _push_file(client, owner, repo, "problems.json", problems_json, token, "Auto-sync from Engram")
+        await _push_file(client, owner, repo, "PROBLEMS.md", problems_md, token, "Auto-sync from Engram")
 
 
 @router.post("/setup-repo")
@@ -82,52 +138,6 @@ async def sync(current_user: UserModel = Depends(get_current_user)):
     if not current_user.github_repo:
         raise HTTPException(status_code=400, detail="GitHub repo not set up. Run setup-repo first.")
 
-    token = decrypt_token(current_user.github_token_encrypted)
-    owner = current_user.github_username
-    repo = current_user.github_repo
-
     db = await get_db()
-    cursor = db.problems.find({"user_id": current_user.id})
-    problems = await cursor.to_list(length=None)
-
-    problems_json = json.dumps([{
-        "title": p["title"],
-        "url": p.get("url"),
-        "topic": p["topic"],
-        "difficulty": p["difficulty"],
-        "notes": p.get("notes"),
-        "key_insight": p.get("key_insight"),
-        "interval": p["interval"],
-        "ease_factor": p["ease_factor"],
-        "repetitions": p["repetitions"],
-        "solo_streak": p["solo_streak"],
-        "frozen": p.get("frozen", False),
-        "last_outcome": p.get("last_outcome"),
-        "next_review_date": str(p["next_review_date"]),
-        "date_added": str(p["date_added"]),
-    } for p in problems], indent=2)
-
-    md_lines = [
-        "# DSA Problems",
-        "",
-        f"Total: **{len(problems)}** problems",
-        "",
-        "| # | Title | Topic | Difficulty | Notes |",
-        "|---|-------|-------|------------|-------|",
-    ]
-    for i, p in enumerate(problems, 1):
-        title = p["title"]
-        topic = p["topic"]
-        diff = p["difficulty"]
-        notes = (p.get("notes") or "")[:60]
-        md_lines.append(f"| {i} | {title} | {topic} | {diff} | {notes} |")
-    problems_md = "\n".join(md_lines)
-
-    async with httpx.AsyncClient() as client:
-        ok1 = await _push_file(client, owner, repo, "problems.json", problems_json, token, "Sync problems from Engram")
-        ok2 = await _push_file(client, owner, repo, "PROBLEMS.md", problems_md, token, "Sync problem list from Engram")
-
-    if not ok1 or not ok2:
-        raise HTTPException(status_code=502, detail="Failed to push files to GitHub")
-
+    await sync_user_problems(db, current_user.id)
     return {"ok": True, "files": ["problems.json", "PROBLEMS.md"]}

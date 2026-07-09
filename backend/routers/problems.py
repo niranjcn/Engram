@@ -5,6 +5,7 @@ from auth import get_current_user
 from database import get_db
 from sm2 import run_sm2
 from utils import to_date
+from routers.github import sync_user_problems
 from datetime import datetime, timedelta
 from bson import ObjectId
 from bson.errors import InvalidId
@@ -86,6 +87,7 @@ async def create_problem(
     }
     result = await db.problems.insert_one(doc)
     doc["_id"] = result.inserted_id
+    await sync_user_problems(db, current_user.id)
     return problem_to_response(doc_to_problem(doc))
 
 
@@ -117,6 +119,7 @@ async def update_problem(
             {"_id": doc["_id"]},
             {"$set": update_data},
         )
+    await sync_user_problems(db, current_user.id)
     updated = await db.problems.find_one({"_id": doc["_id"]})
     return problem_to_response(doc_to_problem(updated))
 
@@ -129,6 +132,7 @@ async def delete_problem(
     db = await get_db()
     doc = await _get_problem_or_404(db, problem_id, current_user.id)
     await db.problems.delete_one({"_id": doc["_id"]})
+    await sync_user_problems(db, current_user.id)
     return {"ok": True}
 
 

@@ -20,6 +20,7 @@
 - `POST /github/setup-repo` endpoint — creates a private `engram-{username}` repo via GitHub API
 - `POST /github/sync` endpoint — pushes `problems.json` and `PROBLEMS.md` to the repo (creates or updates via Content API)
 - `github_repo` field on UserModel and UserResponse
+- Auto-sync to GitHub after `POST /problems`, `PUT /problems`, and `DELETE /problems` (silent no-op if GitHub not connected)
 - `_redirects` file with explicit `/assets/*` passthrough before SPA catch-all
 - `_headers` file for cache-control: `index.html` never cached, `/assets/*` cached immutably
 - `AGENTS.md` with project conventions (push policy, auth rules, PWA scope)
