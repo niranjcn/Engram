@@ -16,10 +16,10 @@ export default function App() {
   const { user, authLoading, login, logout } = useAuth();
 
   if (authLoading) return (
-    <div className="min-h-screen flex items-center justify-center" style={{ background: "#0A0E1A" }}>
-      <div className="flex flex-col items-center gap-3 text-gray-400">
-        <Brain size={32} className="text-indigo-400 animate-pulse" />
-        <p className="text-sm font-mono">Loading tracker...</p>
+    <div className="min-h-screen flex items-center justify-center" style={{ background: "#0B0D12" }}>
+      <div className="flex flex-col items-center gap-3 text-[#5D616C]">
+        <Brain size={32} className="text-[#3B82F6] animate-pulse" />
+        <p className="text-sm">Loading...</p>
       </div>
     </div>
   );

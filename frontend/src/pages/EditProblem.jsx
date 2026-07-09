@@ -1,5 +1,4 @@
 import { useNavigate, useParams } from "react-router-dom";
-import Card from "../components/Card";
 import ProblemForm from "../components/ProblemForm";
 import { useAppData } from "../context/AppDataContext";
 
@@ -9,7 +8,7 @@ export default function EditProblem() {
   const { problems, updateProblem } = useAppData();
   const problem = problems.find(p => p.id === id);
 
-  if (!problem) return <div className="text-gray-400 text-center py-12 font-mono">Problem not found</div>;
+  if (!problem) return <div className="text-[#5D616C] text-center py-12">Problem not found</div>;
 
   const handleSave = async (form) => {
     try {
@@ -19,9 +18,11 @@ export default function EditProblem() {
   };
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-xl font-mono font-bold text-white">Edit Problem</h1>
-      <Card className="p-5"><ProblemForm initial={problem} onSave={handleSave} onCancel={() => navigate("/problems")} /></Card>
+    <div className="space-y-6">
+      <h1 className="text-2xl font-semibold text-[#F1F1F3]">Edit Problem</h1>
+      <div className="rounded-xl border border-[#23262E] bg-[#16181E] p-4 md:p-6">
+        <ProblemForm initial={problem} onSave={handleSave} onCancel={() => navigate("/problems")} />
+      </div>
     </div>
   );
 }

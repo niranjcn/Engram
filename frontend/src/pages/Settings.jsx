@@ -1,12 +1,10 @@
-import Card from "../components/Card";
-
 export default function Settings() {
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-mono font-bold text-white">Settings</h1>
-      <Card className="p-6 text-center">
-        <p className="text-gray-500 text-sm font-mono">More settings coming soon.</p>
-      </Card>
+      <h1 className="text-2xl font-semibold text-[#F1F1F3]">Settings</h1>
+      <div className="rounded-xl border border-[#23262E] bg-[#16181E] p-8 text-center">
+        <p className="text-[#5D616C] text-sm">More settings coming soon.</p>
+      </div>
     </div>
   );
 }

@@ -1,5 +1,5 @@
 export default function Card({ children, className = "" }) {
   return (
-    <div className={`rounded-xl border border-indigo-900/30 bg-gray-900 ${className}`}>{children}</div>
+    <div className={`rounded-xl border border-[#23262E] bg-[#16181E] ${className}`}>{children}</div>
   );
 }

@@ -1,10 +1,10 @@
 export default function Btn({ children, onClick, variant = "primary", className = "", disabled }) {
   const styles = {
-    primary: "bg-indigo-600 hover:bg-indigo-500 text-white",
-    ghost:   "bg-gray-800 hover:bg-gray-700 text-gray-300",
-    danger:  "bg-red-900/40 hover:bg-red-800/60 text-red-400",
-    success: "bg-emerald-900/40 hover:bg-emerald-800/60 text-emerald-400",
-    amber:   "bg-amber-900/40 hover:bg-amber-800/60 text-amber-400",
+    primary: "bg-[#3B82F6] hover:bg-[#2563EB] text-white",
+    ghost:   "bg-[#1C1E26] hover:bg-[#252830] text-[#8B8F96]",
+    danger:  "bg-red-900/30 hover:bg-red-800/50 text-red-400",
+    success: "bg-emerald-900/30 hover:bg-emerald-800/50 text-emerald-400",
+    amber:   "bg-amber-900/30 hover:bg-amber-800/50 text-amber-400",
   };
   return (
     <button onClick={onClick} disabled={disabled}

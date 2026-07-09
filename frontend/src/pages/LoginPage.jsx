@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Brain, Eye, EyeOff } from "lucide-react";
-import Card from "../components/Card";
 import Btn from "../components/Btn";
 import { auth } from "../api";
 
@@ -19,25 +18,34 @@ export default function LoginPage({ onLogin }) {
       onLogin(user);
     } catch (err) { setError(err.message); setBusy(false); }
   };
-  const inp = "w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500";
+  const inp = "w-full bg-[#1C1E26] border border-[#23262E] rounded-lg px-3 py-2.5 text-sm text-[#F1F1F3] focus:outline-none focus:border-[#3B82F6] transition-colors placeholder-[#5D616C]";
   return (
-    <div className="min-h-screen flex items-center justify-center p-4" style={{ background: "#0A0E1A" }}>
-      <Card className="p-8 w-full max-w-sm">
-        <div className="flex items-center gap-2 justify-center mb-2"><Brain size={24} className="text-indigo-400" /><span className="text-lg font-mono font-bold text-white">DSA Tracker</span></div>
-        <p className="text-center text-gray-500 text-sm mb-6 font-mono">Spaced Repetition for DSA Problems</p>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div><input className={inp} placeholder="Email" type="email" value={email} onChange={e => setEmail(e.target.value)} required /></div>
-          <div className="relative">
-            <input className={inp + " pr-10"} placeholder="Password" type={showPw ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)} required />
-            <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 cursor-pointer">
-              {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
-            </button>
+    <div className="min-h-screen flex items-center justify-center p-4" style={{ background: "#0B0D12" }}>
+      <div className="w-full max-w-sm">
+        <div className="text-center mb-8">
+          <div className="w-12 h-12 rounded-xl bg-[#3B82F6]/15 flex items-center justify-center mx-auto mb-4">
+            <Brain size={24} className="text-[#3B82F6]" />
           </div>
-          {error && <div className="text-red-400 text-xs font-mono bg-red-900/20 border border-red-800/40 rounded px-3 py-2">{error}</div>}
-          <Btn className="w-full justify-center" disabled={busy}>{busy ? <span className="spinner-sm" /> : "Sign In"}</Btn>
-        </form>
-        <p className="text-center text-xs text-gray-500 mt-4 font-mono">No account? <button className="text-indigo-400 hover:underline cursor-pointer" onClick={() => onLogin(null, true)}>Register</button></p>
-      </Card>
+          <h1 className="text-xl font-semibold text-[#F1F1F3] mb-1">Engram</h1>
+          <p className="text-sm text-[#5D616C]">Spaced Repetition for DSA</p>
+        </div>
+        <div className="rounded-xl border border-[#23262E] bg-[#16181E] p-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <input className={inp} placeholder="Email" type="email" value={email} onChange={e => setEmail(e.target.value)} required />
+            </div>
+            <div className="relative">
+              <input className={inp + " pr-10"} placeholder="Password" type={showPw ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)} required />
+              <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#5D616C] hover:text-[#8B8F96] transition-colors">
+                {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+            {error && <div className="text-red-400 text-xs bg-red-900/20 border border-red-800/30 rounded px-3 py-2">{error}</div>}
+            <Btn className="w-full justify-center" disabled={busy}>{busy ? <span className="spinner-sm" /> : "Sign In"}</Btn>
+          </form>
+          <p className="text-center text-xs text-[#5D616C] mt-4">No account? <button className="text-[#3B82F6] hover:underline transition-colors" onClick={() => onLogin(null, true)}>Register</button></p>
+        </div>
+      </div>
     </div>
   );
 }
