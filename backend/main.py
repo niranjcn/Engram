@@ -90,7 +90,7 @@ async def security_headers(request: Request, call_next):
         "style-src 'self' 'unsafe-inline'; "
         "img-src 'self' data:; "
         "font-src 'self' data:; "
-        "connect-src 'self'; "
+        "connect-src 'self' https://*.up.railway.app; "
         "frame-ancestors 'none'; "
         "form-action 'self'"
     )
