@@ -32,6 +32,10 @@ class UserResponse(BaseModel):
     username: str
     role: str
     created_at: datetime
+    github_username: Optional[str] = None
+
+class GitHubAuthRequest(BaseModel):
+    code: str
 
 
 class ProblemCreate(BaseModel):

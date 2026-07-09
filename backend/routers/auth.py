@@ -1,10 +1,13 @@
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Response, Request
 from models import UserModel
-from schemas import RegisterRequest, LoginRequest, TokenResponse, UserResponse
+from schemas import RegisterRequest, LoginRequest, TokenResponse, UserResponse, GitHubAuthRequest
 from auth import hash_password, verify_password, create_access_token, get_current_user, COOKIE_NAME
 from database import get_db
+from crypto import encrypt_token
+from bson import ObjectId
 import os
+import httpx
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -81,4 +84,46 @@ async def me(current_user: UserModel = Depends(get_current_user)):
         username=current_user.username,
         role=current_user.role,
         created_at=current_user.created_at,
+        github_username=current_user.github_username,
     )
+
+
+@router.post("/github")
+async def github_auth(data: GitHubAuthRequest, current_user: UserModel = Depends(get_current_user)):
+    client_id = os.getenv("GITHUB_CLIENT_ID")
+    client_secret = os.getenv("GITHUB_CLIENT_SECRET")
+    if not client_id or not client_secret:
+        raise HTTPException(status_code=400, detail="GitHub OAuth not configured")
+
+    async with httpx.AsyncClient() as client:
+        resp = await client.post(
+            "https://github.com/login/oauth/access_token",
+            json={"client_id": client_id, "client_secret": client_secret, "code": data.code},
+            headers={"Accept": "application/json"},
+        )
+        if resp.status_code != 200:
+            raise HTTPException(status_code=502, detail="GitHub OAuth token exchange failed")
+        body = resp.json()
+        if "error" in body or "access_token" not in body:
+            raise HTTPException(status_code=400, detail=body.get("error_description", "GitHub OAuth failed"))
+
+        access_token = body["access_token"]
+
+        user_resp = await client.get(
+            "https://api.github.com/user",
+            headers={"Authorization": f"Bearer {access_token}", "Accept": "application/json"},
+        )
+        if user_resp.status_code != 200:
+            raise HTTPException(status_code=502, detail="Failed to fetch GitHub user")
+        github_user = user_resp.json()
+
+    db = await get_db()
+    await db.users.update_one(
+        {"_id": ObjectId(current_user.id)},
+        {"$set": {
+            "github_token_encrypted": encrypt_token(access_token),
+            "github_username": github_user["login"],
+        }},
+    )
+
+    return {"github_username": github_user["login"]}
