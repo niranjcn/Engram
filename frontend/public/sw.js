@@ -1,13 +1,6 @@
-const CACHE = "engram-v1";
+const CACHE = "engram-v2";
 
 const PRECACHE = [
-  "/",
-  "/dashboard",
-  "/problems",
-  "/add",
-  "/stats",
-  "/settings",
-  "/index.html",
   "/manifest.json",
   "/icon-192.png",
   "/icon-512.png",
@@ -31,6 +24,10 @@ self.addEventListener("activate", (e) => {
 });
 
 self.addEventListener("fetch", (e) => {
+  if (e.request.mode === "navigate") {
+    e.respondWith(fetch(e.request).catch(() => caches.match("/index.html")));
+    return;
+  }
   e.respondWith(
     caches.match(e.request).then((hit) => hit || fetch(e.request))
   );
