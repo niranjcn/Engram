@@ -12,6 +12,7 @@ class UserModel(BaseModel):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     github_token_encrypted: Optional[str] = None
     github_username: Optional[str] = None
+    github_repo: Optional[str] = None
 
 
 class ProblemModel(BaseModel):
