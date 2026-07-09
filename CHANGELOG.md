@@ -17,6 +17,8 @@
 - Content-Security-Policy via meta tag, backend middleware, and Netlify headers
 - HSTS header (`max-age=31536000; includeSubDomains`)
 - Favicon (branded brain icon in dark square)
+- PWA support — `manifest.json` (standalone, dark theme, custom icons), service worker (static asset caching), Apple PWA meta tags
+- Admin and Settings icon links in mobile top bar (previously only accessible from desktop sidebar)
 
 ### Changed
 
