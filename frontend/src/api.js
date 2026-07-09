@@ -102,6 +102,6 @@ export const problemsApi = {
 
 // Stats & History
 export const reviewsApi = {
-  history: () => get('/reviews/history'),
+  history: (days = 30) => get(`/reviews/history?days=${days}`),
   stats: () => get('/reviews/stats'),
 }

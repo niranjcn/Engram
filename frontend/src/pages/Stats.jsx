@@ -1,14 +1,66 @@
+import { useMemo } from "react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import Card from "../components/Card";
 import { OUTCOMES, TOPICS } from "../lib/constants";
 import { useAppData } from "../context/AppDataContext";
 
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const DAYS = ["", "Mon", "", "Wed", "", "Fri", ""];
+const CELL = 12;
+
+function getColor(count) {
+  if (count === 0) return "#1F2937";
+  if (count <= 3) return "#3730A3";
+  if (count <= 7) return "#4F46E5";
+  if (count <= 15) return "#6366F1";
+  return "#818CF8";
+}
+
 export default function Stats() {
   const { problems, stats, history } = useAppData();
   const byTopic = TOPICS.map(t => ({ topic: t.length > 12 ? t.slice(0,12)+"…" : t, count: problems.filter(p => p.topic === t).length })).filter(x => x.count > 0);
   const outcomeCounts = Object.keys(OUTCOMES).map(k => ({ name: OUTCOMES[k].label, value: problems.filter(p => p.lastOutcome === k).length, color: OUTCOMES[k].color })).filter(x => x.value > 0);
-  const last30 = Array.from({ length: 30 }, (_, i) => { const d = new Date(); d.setDate(d.getDate() - (29 - i)); return d.toISOString().split("T")[0]; });
-  const histMap = Object.fromEntries(history.map(h => [h.date, h.count]));
+
+  const histMap = useMemo(() => Object.fromEntries(history.map(h => [h.date, h.count])), [history]);
+
+  const { weeks, monthLabels } = useMemo(() => {
+    const today = new Date();
+    const start = new Date(today);
+    start.setDate(start.getDate() - 364);
+    start.setDate(start.getDate() - start.getDay());
+
+    const end = new Date(today);
+    if (end.getDay() !== 6) end.setDate(end.getDate() + (6 - end.getDay()));
+
+    const weeks = [];
+    const cur = new Date(start);
+    let lastMonth = -1;
+    const labels = [];
+
+    while (cur <= end) {
+      const week = [];
+      for (let d = 0; d < 7; d++) {
+        week.push({ date: cur.toISOString().split("T")[0], count: histMap[cur.toISOString().split("T")[0]] || 0 });
+        cur.setDate(cur.getDate() + 1);
+      }
+      const month = new Date(week[0].date).getMonth();
+      if (month !== lastMonth) {
+        labels.push({ label: MONTHS[month], startWeek: weeks.length });
+        lastMonth = month;
+      }
+      weeks.push(week);
+    }
+
+    return { weeks, monthLabels: labels };
+  }, [histMap]);
+
+  const monthLabelElements = useMemo(() => {
+    return monthLabels.map((m, i) => {
+      const endWeek = monthLabels[i + 1]?.startWeek ?? weeks.length;
+      const span = endWeek - m.startWeek;
+      return { label: m.label, span };
+    });
+  }, [monthLabels, weeks.length]);
 
   return (
     <div className="space-y-6">
@@ -25,19 +77,36 @@ export default function Stats() {
         ))}
       </div>
 
-      <Card className="p-4">
-        <h3 className="text-xs font-mono text-indigo-400 uppercase tracking-widest mb-4">Activity — Last 30 Days</h3>
-        <div className="grid gap-1" style={{ gridTemplateColumns: "repeat(10, 1fr)" }}>
-          {last30.map(d => {
-            const c = histMap[d] || 0;
-            return <div key={d} title={`${d}: ${c} review${c!==1?"s":""}`} className="aspect-square rounded-sm transition-colors"
-              style={{ background: c === 0 ? "#1F2937" : c === 1 ? "#3730A3" : c <= 3 ? "#4F46E5" : "#818CF8" }} />;
-          })}
-        </div>
-        <div className="flex gap-2 mt-2 justify-end items-center">
-          {[["#1F2937","0"],["#3730A3","1"],["#4F46E5","2-3"],["#818CF8","4+"]].map(([c,l]) => (
-            <div key={l} className="flex items-center gap-1"><div className="w-3 h-3 rounded-sm" style={{ background: c }} /><span className="text-xs text-gray-600">{l}</span></div>
+      <Card className="p-4 overflow-x-auto">
+        <h3 className="text-xs font-mono text-indigo-400 uppercase tracking-widest mb-4">Activity — Last 12 Months</h3>
+        <div className="flex ml-8 mb-1" style={{ gap: 2 }}>
+          {monthLabelElements.map(m => (
+            <div key={m.label} className="text-[10px] text-gray-500 font-mono leading-none" style={{ width: m.span * CELL + (m.span - 1) * 2 }}>
+              {m.label}
+            </div>
           ))}
+        </div>
+        <div className="flex">
+          <div className="flex flex-col mr-1" style={{ gap: 2 }}>
+            {DAYS.map((d, i) => <div key={i} className="text-[10px] text-gray-600 font-mono leading-none pt-px" style={{ height: CELL }}>{d}</div>)}
+          </div>
+          <div className="flex" style={{ gap: 2 }}>
+            {weeks.map((week, wi) => (
+              <div key={wi} className="flex flex-col" style={{ gap: 2 }}>
+                {week.map(day => (
+                  <div key={day.date} className="rounded-sm cursor-default" title={`${day.count} review${day.count !== 1 ? "s" : ""} on ${day.date}`}
+                    style={{ width: CELL, height: CELL, background: getColor(day.count) }} />
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="flex items-center gap-1.5 mt-2 justify-end">
+          <span className="text-[10px] text-gray-600 font-mono">Less</span>
+          {[0, 1, 4, 8, 16].map(c => (
+            <div key={c} className="rounded-sm" style={{ width: CELL, height: CELL, background: getColor(c) }} />
+          ))}
+          <span className="text-[10px] text-gray-600 font-mono">More</span>
         </div>
       </Card>
 

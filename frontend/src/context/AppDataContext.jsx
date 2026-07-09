@@ -16,7 +16,7 @@ export function AppDataProvider({ children, user }) {
     setLoading(true);
     try {
       const [p, s, h] = await Promise.all([
-        problemsApi.list(), reviewsApi.stats(), reviewsApi.history(),
+        problemsApi.list(), reviewsApi.stats(), reviewsApi.history(365),
       ]);
       setProblems(p); setStats(s); setHistory(h);
     } catch {

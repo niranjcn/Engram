@@ -12,9 +12,10 @@ router = APIRouter(prefix="/reviews", tags=["reviews"])
 @router.get("/history", response_model=list[ReviewHistoryEntry])
 async def get_history(
     current_user: UserModel = Depends(get_current_user),
+    days: int = 30,
 ):
     db = await get_db()
-    thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+    thirty_days_ago = datetime.utcnow() - timedelta(days=days)
     cursor = db.review_history.find(
         {"user_id": current_user.id, "date": {"$gte": thirty_days_ago}},
     ).sort("date", 1)
