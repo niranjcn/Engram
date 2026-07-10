@@ -33,10 +33,10 @@ export default function ProblemList() {
 
   const sel = "bg-[#1C1E26] border border-[#23262E] rounded-lg px-2 py-1.5 text-xs text-[#8B8F96] focus:outline-none focus:border-[#3B82F6]";
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     const confirmed = window.confirm("Delete this problem?");
     if (!confirmed) return;
-    deleteProblem(id);
+    try { await deleteProblem(id) } catch {}
   };
 
   return (

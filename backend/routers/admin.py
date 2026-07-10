@@ -29,7 +29,10 @@ def _compute_streaks(history_entries):
                 streak_count = 1
                 prev_date = d
         else:
-            if (prev_date - d).days == 1:
+            diff = (prev_date - d).days
+            if diff == 0:
+                continue
+            elif diff == 1:
                 streak_count += 1
                 prev_date = d
             else:
@@ -44,7 +47,10 @@ def _compute_streaks(history_entries):
             streak_count = 1
             prev_date = d
         else:
-            if (prev_date - d).days == 1:
+            diff = (prev_date - d).days
+            if diff == 0:
+                continue
+            elif diff == 1:
                 streak_count += 1
                 prev_date = d
             else:

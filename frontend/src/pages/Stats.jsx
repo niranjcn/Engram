@@ -28,7 +28,7 @@ export default function Stats() {
         {[
           ["Streak", (stats.streak?.current || 0) + " days", "#F59E0B"],
           ["Best Streak", (stats.streak?.longest || 0) + " days", "#F59E0B"],
-          ["Mastered", stats.mastered || 0 + " problems", "#22C55E"]
+          ["Mastered", (stats.mastered || 0) + " problems", "#22C55E"]
         ].map(([l, v, c]) => (
           <div key={l} className="rounded-xl border border-[#23262E] bg-[#16181E] p-3 md:p-4 text-center">
             <div className="text-base md:text-lg font-semibold text-[#F1F1F3]">{v}</div>

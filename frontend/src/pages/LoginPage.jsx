@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Brain, Eye, EyeOff, Users } from "lucide-react";
 import Btn from "../components/Btn";
 import { auth } from "../api";
 
 export default function LoginPage({ onLogin }) {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
@@ -43,7 +44,7 @@ export default function LoginPage({ onLogin }) {
             {error && <div className="text-red-400 text-xs bg-red-900/20 border border-red-800/30 rounded px-3 py-2">{error}</div>}
             <Btn className="w-full justify-center" disabled={busy}>{busy ? <span className="spinner-sm" /> : "Sign In"}</Btn>
           </form>
-          <p className="text-center text-xs text-[#5D616C] mt-4">No account? <button className="text-[#3B82F6] hover:underline transition-colors" onClick={() => onLogin(null, true)}>Register</button></p>
+          <p className="text-center text-xs text-[#5D616C] mt-4">No account? <button className="text-[#3B82F6] hover:underline transition-colors" onClick={() => navigate("/register")}>Register</button></p>
           <Link to="/users" className="flex items-center justify-center gap-1.5 text-xs text-[#5D616C] hover:text-[#8B8F96] mt-3 pt-3 border-t border-[#23262E] transition-colors">
             <Users size={14} /> Browse community profiles
           </Link>

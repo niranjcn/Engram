@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { Brain } from "lucide-react";
+import ErrorBoundary from "./components/ErrorBoundary";
 import Layout from "./components/Layout";
 import PublicLayout from "./components/PublicLayout";
 import RequireAdmin from "./components/RequireAdmin";
@@ -33,6 +34,7 @@ export default function App() {
   );
 
   return (
+    <ErrorBoundary>
     <Routes>
       <Route path="/github-callback" element={<GithubCallback />} />
       <Route element={<PublicLayout />}>
@@ -61,5 +63,6 @@ export default function App() {
         </Route>
       )}
     </Routes>
+    </ErrorBoundary>
   );
 }

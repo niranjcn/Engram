@@ -1,3 +1,4 @@
+import re
 from fastapi import APIRouter, HTTPException, Query
 from schemas import PublicUserResponse, PublicProblemResponse, ReviewHistoryEntry
 from database import get_db
@@ -17,7 +18,8 @@ async def list_profiles(q: str = Query("", max_length=50)):
     db = await get_db()
     query = dict(PUBLIC_FILTER)
     if q:
-        query["username"] = {"$regex": q, "$options": "i"}
+        escaped = re.escape(q)
+        query["username"] = {"$regex": escaped, "$options": "i"}
 
     users = await db.users.find(query).sort("username", 1).to_list(None)
 
@@ -70,7 +72,10 @@ async def get_profile(username: str):
                 streak_count = 1
                 prev_date = d
         else:
-            if (prev_date - d).days == 1:
+            diff = (prev_date - d).days
+            if diff == 0:
+                continue
+            elif diff == 1:
                 streak_count += 1
                 prev_date = d
             else:
@@ -86,7 +91,10 @@ async def get_profile(username: str):
             streak_count = 1
             prev_date = d
         else:
-            if (prev_date - d).days == 1:
+            diff = (prev_date - d).days
+            if diff == 0:
+                continue
+            elif diff == 1:
                 streak_count += 1
                 prev_date = d
             else:

@@ -1,9 +1,11 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Brain, Eye, EyeOff } from "lucide-react";
 import Btn from "../components/Btn";
 import { auth } from "../api";
 
 export default function RegisterPage({ onRegister }) {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -56,7 +58,7 @@ export default function RegisterPage({ onRegister }) {
             {error && <div className="text-red-400 text-xs bg-red-900/20 border border-red-800/30 rounded px-3 py-2">{error}</div>}
             <Btn className="w-full justify-center" disabled={busy}>{busy ? <span className="spinner-sm" /> : "Register"}</Btn>
           </form>
-          <p className="text-center text-xs text-[#5D616C] mt-4">Already have an account? <button className="text-[#3B82F6] hover:underline transition-colors" onClick={() => onRegister(null, true)}>Sign In</button></p>
+          <p className="text-center text-xs text-[#5D616C] mt-4">Already have an account? <button className="text-[#3B82F6] hover:underline transition-colors" onClick={() => navigate("/")}>Sign In</button></p>
         </div>
       </div>
     </div>

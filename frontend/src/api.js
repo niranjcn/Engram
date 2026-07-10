@@ -14,9 +14,12 @@ function opts(method, body) {
 }
 
 async function handleResponse(res) {
-  const data = await res.json()
-  if (!res.ok) throw new Error(data.detail || 'Request failed')
-  return data
+  if (!res.ok) {
+    let detail = 'Request failed'
+    try { const data = await res.json(); detail = data.detail || detail } catch {}
+    throw new Error(detail)
+  }
+  return res.json()
 }
 
 function get(path) {

@@ -8,13 +8,15 @@ export default function ProblemForm({ onSave, onCancel, initial }) {
   const isEditing = !!initial;
   const blank = { title:"", url:"", topic:"Array", difficulty:"Medium", notes:"", keyInsight:"", outcome: "solved_solo" };
   const [form, setForm] = useState({ ...blank, ...(initial || {}), outcome: initial?.lastOutcome || "solved_solo" });
+  const [saving, setSaving] = useState(false);
   const set = k => e => setForm(f => ({ ...f, [k]: e.target.value }));
   const preview = getNextReviewPreview(form.outcome, initial);
   const outcomeInfo = OUTCOME_OPTIONS.find(o => o.value === form.outcome);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.title.trim()) return;
-    onSave(form, initial);
+    setSaving(true);
+    try { await onSave(form, initial) } finally { setSaving(false) }
   };
 
   const inp = "w-full bg-[#1C1E26] border border-[#23262E] rounded-lg px-3 py-2.5 text-sm text-[#F1F1F3] focus:outline-none focus:border-[#3B82F6] transition-colors placeholder-[#5D616C]";
@@ -61,7 +63,7 @@ export default function ProblemForm({ onSave, onCancel, initial }) {
         <textarea className={inp + " resize-none"} rows={2} value={form.keyInsight} onChange={set("keyInsight")} placeholder="The aha moment that unlocks this problem..." />
       </div>
       <div className="flex gap-2 pt-1">
-        <Btn onClick={handleSave}><Plus size={14} />{initial ? "Update" : "Add Problem"}</Btn>
+        <Btn onClick={handleSave} disabled={saving}>{saving ? <span className="spinner-sm" /> : <Plus size={14} />}{initial ? "Update" : "Add Problem"}</Btn>
         <Btn onClick={onCancel} variant="ghost">Cancel</Btn>
       </div>
     </div>
