@@ -19,8 +19,12 @@ _oauth_states: dict[str, float] = {}
 
 
 def _cookie_secure() -> bool:
-    origins = os.getenv("ALLOWED_ORIGINS", "")
-    return not any(h in origins for h in ("localhost", "127.0.0.1"))
+    origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173")
+    for o in origins.split(","):
+        o = o.strip()
+        if "://localhost" not in o and "://127.0.0.1" not in o:
+            return True
+    return False
 
 
 def _set_token_cookie(response: Response, token: str):
