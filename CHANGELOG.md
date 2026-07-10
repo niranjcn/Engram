@@ -3,6 +3,7 @@
 ## Unreleased
 
 ### Fixed
+- Cross-origin auth: cookie `SameSite` now correctly set to `None` with `Secure` when production origins are present in `ALLOWED_ORIGINS` (fixes Chrome login when frontend on Netlify and backend on Railway) — `auth.py:_cookie_secure()` checks origin URLs individually instead of substring-matching the whole list
 - Heatmap now uses a true rolling 12-month window (starts from 365 days ago instead of the 1st of a month 11 months ago) — oldest column falls off left as new day appears on right
 - Heatmap date formatting uses IST (`Asia/Kolkata`) instead of UTC — today's box shows on correct day
 - Review history stored as IST midnight instead of UTC midnight (backend `ist_today_start()` / `ist_today()` helpers)

@@ -56,10 +56,13 @@ A problem **freezes** (leaves the review queue permanently) after you solve it s
 - **Daily Dashboard** — see exactly what's due today, what's coming up, and your streak
 - **Stage System** — Learning → Reviewing → Mastered → Frozen with automatic transitions
 - **Problem Journal** — notes and key insight saved per problem
-- **Stats Page** — 30-day activity heatmap, topic breakdown, outcome distribution
-- **JWT Auth** — register, login, your data is yours alone
-- **Cross-device sync** — data lives in the cloud, not your browser
-- **Export to JSON** — back up your entire problem set anytime
+- **Stats Page** — 12-month activity heatmap, topic breakdown, outcome distribution
+- **GitHub Sync** — push solutions to a LeetCode repo with auto-generated files
+- **Community Directory** — browse public profiles and their problem lists
+- **Admin Panel** — dashboard with metrics, user management, activity log
+- **httpOnly Cookie Auth** — secure, no JavaScript access to tokens
+- **Rate Limiting** — 10 req/min on login/register per IP
+- **PWA Support** — installable, service worker for offline-capable caching
 - **Docker support** — one command local setup
 
 ---
@@ -93,8 +96,8 @@ A problem **freezes** (leaves the review queue permanently) after you solve it s
 | Component | Technology |
 |---|---|
 | Framework | FastAPI (Python 3.11) |
-| Database | SQLite via SQLModel / SQLAlchemy |
-| Auth | JWT with bcrypt password hashing |
+| Database | MongoDB via Motor (async driver) |
+| Auth | JWT (httpOnly cookie) with bcrypt password hashing |
 | Validation | Pydantic v2 |
 | Server | Uvicorn |
 
@@ -112,8 +115,9 @@ A problem **freezes** (leaves the review queue permanently) after you solve it s
 
 | Component | Technology |
 |---|---|
+| Hosting (API) | Railway |
+| Hosting (Frontend) | Netlify |
 | Containerization | Docker & Docker Compose |
-| DB Volume | SQLite persisted via named volume |
 
 ---
 
@@ -121,33 +125,41 @@ A problem **freezes** (leaves the review queue permanently) after you solve it s
 
 ```mermaid
 flowchart TD
-  subgraph Client ["Frontend (React + Vite)"]
-    UI[Single-page App\nApp.jsx]
-    API_C[api.js\nHTTP Client + JWT]
+  subgraph Client ["Frontend (React + Vite) — netlify"]
+    UI[SPA with Routes]
+    API_C[api.js\nHTTP Client + httpOnly Cookie]
   end
 
-  subgraph Server ["Backend (FastAPI + Uvicorn)"]
-    AUTH[auth.py\nJWT · bcrypt · /auth/*]
-    PROBLEMS[problems.py\nCRUD + SM-2 Review]
-    REVIEWS[reviews.py\nHistory + Stats]
+  subgraph Backend ["Backend (FastAPI + Uvicorn) — railway"]
+    AUTH[routers/auth.py\nRegister, Login, OAuth]
+    PROBLEMS[routers/problems.py\nCRUD + SM-2 Review]
+    REVIEWS[routers/reviews.py\nHistory + Stats]
+    ADMIN[routers/admin.py\nDashboard, Users, Activity]
+    GITHUB[routers/github.py\nRepo Setup, Sync]
+    PROFILES[routers/profiles.py\nCommunity Directory]
+    JWT[auth.py\nJWT · bcrypt · Cookie Helper]
     SM2[sm2.py\nSM-2 Algorithm]
-    SCHEMAS[schemas.py\nPydantic Validation]
-    MODELS[models.py\nSQLModel ORM]
   end
 
-  subgraph Data ["Persistence"]
-    DB[(SQLite\ndsa_tracker.db)]
+  subgraph Data ["Persistence — MongoDB Atlas"]
+    DB[(MongoDB)]
   end
 
   UI --> API_C
-  API_C -- HTTP :8000 --> AUTH
+  API_C -- HTTPS --> AUTH
   API_C --> PROBLEMS
   API_C --> REVIEWS
-  AUTH --> MODELS
+  API_C --> ADMIN
+  API_C --> GITHUB
+  API_C --> PROFILES
+  AUTH --> JWT
+  AUTH --> DB
   PROBLEMS --> SM2
-  PROBLEMS --> MODELS
-  REVIEWS --> MODELS
-  MODELS --> DB
+  PROBLEMS --> DB
+  REVIEWS --> DB
+  ADMIN --> DB
+  GITHUB --> DB
+  PROFILES --> DB
 ```
 
 **Request Flow:**
@@ -158,27 +170,27 @@ sequenceDiagram
   participant API as FastAPI Backend
   participant AUTH as JWT Auth
   participant SM2 as SM-2 Engine
-  participant DB as SQLite
+  participant DB as MongoDB
 
   U->>API: POST /auth/login {email, password}
   API->>AUTH: verify_password()
   AUTH-->>API: JWT token
-  API-->>U: {access_token}
+  API-->>U: Set-Cookie: access_token=<JWT>; HttpOnly; Secure; SameSite=None
 
-  Note over U,DB: Subsequent requests include Authorization: Bearer <token>
+  Note over U,DB: Subsequent requests send cookie automatically
 
   U->>API: POST /problems {title, topic, ...}
-  API->>AUTH: get_current_user() — decode JWT
+  API->>AUTH: get_current_user() — read cookie, decode JWT
   AUTH-->>API: user object
-  API->>DB: INSERT problem
-  DB-->>API: problem
+  API->>DB: db.problems.insert_one(...)
+  DB-->>API: inserted problem
   API-->>U: problem (with SM-2 defaults)
 
   U->>API: POST /problems/{id}/review {outcome}
   API->>AUTH: get_current_user()
   API->>SM2: run_sm2(problem, outcome)
   SM2-->>API: {interval, ease_factor, next_review_date, ...}
-  API->>DB: UPDATE problem + INSERT review_history
+  API->>DB: db.problems.update_one(...) + db.reviews.insert_one(...)
   DB-->>API: updated problem
   API-->>U: updated problem
 ```
@@ -191,33 +203,54 @@ sequenceDiagram
 dsa_tracker/
 ├── backend/
 │   ├── routers/
-│   │   ├── auth.py          # Register, login, me
+│   │   ├── auth.py          # Register, login, OAuth, logout, me
 │   │   ├── problems.py      # CRUD + review endpoint
-│   │   └── reviews.py       # History & stats
-│   ├── auth.py              # JWT, bcrypt, get_current_user
+│   │   ├── reviews.py       # History & stats
+│   │   ├── admin.py         # Admin dashboard, users, activity
+│   │   ├── github.py        # GitHub repo setup, sync
+│   │   └── profiles.py      # Public profile & community directory
+│   ├── auth.py              # JWT, bcrypt, cookie helper, get_current_user
+│   ├── crypto.py            # Fernet token encryption for GitHub tokens
 │   ├── sm2.py               # SM-2 spaced repetition algorithm
-│   ├── models.py            # SQLModel tables (User, Problem, ReviewHistory)
-│   ├── schemas.py           # Pydantic request/response models
-│   ├── database.py          # SQLite engine & session
-│   ├── main.py              # FastAPI app + CORS + security headers
+│   ├── models.py            # Pydantic models (User, Problem, ReviewHistory)
+│   ├── schemas.py           # Pydantic request/response schemas
+│   ├── database.py          # MongoDB connection via Motor
+│   ├── main.py              # FastAPI app + CORS + CSP + rate limiting
+│   ├── utils.py             # IST timezone helpers
 │   ├── Dockerfile
 │   ├── requirements.txt
-│   ├── .env.example
-│   └── .gitignore
+│   └── .env.example
 ├── frontend/
 │   ├── src/
-│   │   ├── App.jsx          # Single-file app (all views)
-│   │   ├── api.js           # HTTP client with JWT + case conversion
+│   │   ├── App.jsx          # State + routing
+│   │   ├── api.js           # HTTP client with credentials: include
 │   │   ├── main.jsx         # ReactDOM entry point
-│   │   └── styles.css       # Tailwind directives + animations
+│   │   ├── styles.css       # Tailwind directives + animations
+│   │   ├── context/
+│   │   │   └── AppDataContext.jsx  # Shared app data context
+│   │   ├── components/
+│   │   │   ├── Badge.jsx, Btn.jsx, Card.jsx
+│   │   │   ├── ErrorBoundary.jsx, Layout.jsx, PublicLayout.jsx
+│   │   │   ├── Heatmap.jsx    # 12-month contribution graph
+│   │   │   ├── ProblemForm.jsx, ReviewCard.jsx
+│   │   │   └── RequireAdmin.jsx
+│   │   ├── pages/
+│   │   │   ├── Dashboard, ProblemList, Stats, LoginPage, RegisterPage
+│   │   │   ├── AddProblem, EditProblem, Settings, ProfilePage
+│   │   │   ├── UserDirectory, GithubCallback
+│   │   │   └── admin/         # Admin dashboard pages
+│   │   └── lib/
+│   │       ├── constants.js   # TOPICS, OUTCOMES, DIFF_COLOR, etc.
+│   │       └── utils.js       # sm2 helpers, date utils
 │   ├── index.html
 │   ├── vite.config.js
-│   ├── tailwind.config.js
-│   ├── postcss.config.js
 │   ├── package.json
-│   └── .gitignore
+│   └── _redirects / _headers
 ├── docker-compose.yml
 ├── .gitignore
+├── AGENTS.md
+├── CHANGELOG.md
+├── LEARN_REACT.md
 └── README.md
 ```
 
@@ -226,17 +259,20 @@ dsa_tracker/
 ## 5. Key Features
 
 - **SM-2 Spaced Repetition** — Server-side algorithm schedules review dates based on performance
-- **JWT Authentication** — Register, login, and token-based session management
-- **Dashboard** — Due today queue, coming up (7-day), mastered problems, 30-day activity graph
+- **httpOnly Cookie Auth** — JWT stored in secure, httpOnly cookie (invisible to JavaScript)
+- **Dashboard** — Due today queue, coming up (7-day), mastered problems, 12-month contribution heatmap
 - **Problem Management** — Add, edit, delete problems with topic/difficulty/notes/key insight
 - **Review Flow** — Three outcomes (Solved Solo / Used Hint / Checked Code) each affecting intervals differently
 - **Stage Filtering** — Filter problems by stage: Learning, Reviewing, Mastered, Frozen
 - **Stage Badges** — Visual indicators with emoji (🔄 Learning, 🔁 Reviewing, 🏆 Mastered, ❄️ Frozen)
 - **Statistics** — Distribution pie chart, outcome breakdown, streak tracking
 - **Unfreeze** — Frozen problems can be unfrozen to resume review
-- **Password Visibility** — Eye/EyeOff toggle on password fields
-- **Confirm Password** — Client-side match validation on registration
-- **Security Headers** — CSP, X-Frame-Options, X-Content-Type-Options on all API responses
+- **GitHub Integration** — Connect GitHub, auto-create LeetCode repo, sync solutions as individual files
+- **Admin Panel** — Dashboard with user/problem/review metrics, user management, activity logs, role management
+- **Community Directory** — Browse public profiles, search by username, view others' problem lists
+- **Rate Limiting** — 10 req/min on `/auth/login` and `/auth/register` per IP
+- **PWA Support** — Manifest, service worker, installable, offline-capable asset caching
+- **Security Headers** — CSP, HSTS, X-Frame-Options, X-Content-Type-Options on all API responses
 - **URL Validation** — Problem URLs restricted to http/https on both client and server
 - **Dockerized** — One command to start both services
 
@@ -279,15 +315,19 @@ stateDiagram-v2
 
 ## 8. API Overview
 
-All endpoints serve JSON and require `Authorization: Bearer <token>` except `/auth/register` and `/auth/login`.
+All endpoints serve JSON. Auth is via httpOnly cookie (sent automatically) except `/auth/register` and `/auth/login` which are public.
 
 ### Auth
 
 | Method | Path | Description |
 |---|---|---|
 | POST | `/auth/register` | Create account (email, username, password) |
-| POST | `/auth/login` | Login, returns JWT |
+| POST | `/auth/login` | Login, sets httpOnly cookie |
+| POST | `/auth/logout` | Clear auth cookie |
 | GET | `/auth/me` | Current user info |
+| POST | `/auth/github` | Exchange OAuth code for GitHub token |
+| GET | `/auth/github/config` | GitHub OAuth client ID + CSRF state |
+| POST | `/auth/github/language` | Set code file language preference |
 
 ### Problems
 
@@ -304,8 +344,33 @@ All endpoints serve JSON and require `Authorization: Bearer <token>` except `/au
 
 | Method | Path | Description |
 |---|---|---|
-| GET | `/reviews/history` | Review count per day (last 30 days) |
+| GET | `/reviews/history` | Review count per day (rolling 12 months) |
 | GET | `/reviews/stats` | Aggregate stats (total, frozen, mastered, by topic, by outcome, streak) |
+
+### Community / Profiles
+
+| Method | Path | Description |
+|---|---|---|
+| GET | `/profiles` | List public profiles (searchable) |
+| GET | `/profiles/{user_id}` | Public profile with stats + heatmap |
+| GET | `/profiles/{user_id}/problems` | Public problem list |
+
+### GitHub Sync
+
+| Method | Path | Description |
+|---|---|---|
+| POST | `/github/setup-repo` | Create (or detect) LeetCode repo |
+| POST | `/github/sync` | Force sync all problems to GitHub |
+| POST | `/github/disconnect` | Remove GitHub connection |
+
+### Admin
+
+| Method | Path | Description |
+|---|---|---|
+| GET | `/admin/dashboard` | Metrics, registrations, activity |
+| GET | `/admin/users` | List all users (searchable, sortable) |
+| GET | `/admin/users/{id}` | User detail with stats + heatmap + problems |
+| DELETE | `/admin/users/{id}` | Delete user account |
 
 ### System
 
@@ -328,16 +393,18 @@ flowchart LR
 ```
 
 | Layer | Implementation |
-|---|---|
+|---|---|---|
 | **CORS** | Restricted to `ALLOWED_ORIGINS` env var (default: `localhost:5173`) |
-| **JWT** | 7-day expiry, signed with `SECRET_KEY`, validated on every protected route |
+| **JWT** | 5-hour expiry, stored in httpOnly Secure SameSite=None cookie, validated on every protected route |
 | **Password Hashing** | bcrypt via passlib |
 | **Input Validation** | Pydantic schemas with length constraints, email format, URL protocol check |
 | **User Isolation** | All queries scoped to `current_user.id` — users cannot access each others' data |
-| **Security Headers** | `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy`, `CSP` |
+| **Security Headers** | `Content-Security-Policy`, `Strict-Transport-Security`, `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy`, `X-XSS-Protection: 0` |
+| **Rate Limiting** | 10 req/min on login & register per IP (configurable via `RATE_LIMIT_PER_MINUTE`) |
 | **URL Sanitization** | Problem URLs must start with `http://` or `https://` (both client and server) |
 | **Secret Key** | Required at startup — no fallback default |
 | **Registration** | Generic error message prevents email enumeration |
+| **Admin Seeding** | Admin account created via env vars on first startup (never exposed in logs) |
 
 ---
 
@@ -399,11 +466,25 @@ npm run dev
 # Required — generate with: python -c "import secrets; print(secrets.token_hex(32))"
 SECRET_KEY=your-strong-random-key-here
 
+# Required — MongoDB connection string
+MONGODB_URL=mongodb://localhost:27017
+MONGODB_DB_NAME=dsa_tracker
+
 # Optional — comma-separated allowed origins for CORS
 ALLOWED_ORIGINS=http://localhost:5173
 
-# Optional — defaults to sqlite:///./dsa_tracker.db
-DATABASE_URL=sqlite:///./dsa_tracker.db
+# Optional — rate limit per minute (default: 10)
+RATE_LIMIT_PER_MINUTE=10
+
+# Optional — admin account seeded on first startup
+ADMIN_EMAIL=admin@example.com
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=secure-password
+
+# Optional — GitHub OAuth
+GITHUB_CLIENT_ID=your-client-id
+GITHUB_CLIENT_SECRET=your-client-secret
+GITHUB_TOKEN_ENCRYPTION_KEY=your-fernet-key
 ```
 
 ### Frontend (`frontend/.env`)
@@ -411,6 +492,17 @@ DATABASE_URL=sqlite:///./dsa_tracker.db
 ```env
 VITE_API_URL=http://localhost:8000
 ```
+
+### Production (Railway + Netlify)
+
+| Platform | Env Var | Value |
+|---|---|---|
+| Railway | `MONGODB_URL` | MongoDB Atlas connection string |
+| Railway | `SECRET_KEY` | Strong random hex string |
+| Railway | `ALLOWED_ORIGINS` | `http://localhost:5173,https://dsa-engram.netlify.app` |
+| Railway | `GITHUB_TOKEN_ENCRYPTION_KEY` | Fernet key for token encryption |
+| Railway | `ADMIN_EMAIL`, `ADMIN_USERNAME`, `ADMIN_PASSWORD` | Admin seed credentials |
+| Netlify | `VITE_API_URL` | `https://engram-production-ec05.up.railway.app` |
 
 ---
 
