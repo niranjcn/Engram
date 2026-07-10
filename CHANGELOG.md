@@ -4,6 +4,10 @@
 
 ### Fixed
 - Cross-origin auth: cookie `SameSite` now correctly set to `None` with `Secure` when production origins are present in `ALLOWED_ORIGINS` (fixes Chrome login when frontend on Netlify and backend on Railway) — `auth.py:_cookie_secure()` checks origin URLs individually instead of substring-matching the whole list
+- Cross-origin auth fallback: login/register now return token in response body, frontend sends as `Authorization: Bearer` header — bypasses Chrome blocking cross-origin cookies entirely when third-party cookies are disabled
+
+### Known Issues
+- **Security tradeoff**: The `Authorization` header fallback exposes the JWT token to JavaScript (in-memory variable in `api.js`), unlike the httpOnly cookie which is invisible to JS. Mitigated by strict CSP (`script-src 'self'`), React's built-in XSS escaping, and memory-only storage (lost on refresh, not persisted). **Future fix**: Move backend to a subdomain of the frontend domain (e.g., `api.dsa-engram.netlify.app` proxied to Railway) to restore full httpOnly cookie protection.
 - Heatmap now uses a true rolling 12-month window (starts from 365 days ago instead of the 1st of a month 11 months ago) — oldest column falls off left as new day appears on right
 - Heatmap date formatting uses IST (`Asia/Kolkata`) instead of UTC — today's box shows on correct day
 - Review history stored as IST midnight instead of UTC midnight (backend `ist_today_start()` / `ist_today()` helpers)
