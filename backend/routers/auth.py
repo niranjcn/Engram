@@ -57,7 +57,7 @@ async def register(data: RegisterRequest, response: Response):
     })
     token = create_access_token({"sub": str(result.inserted_id)})
     _set_token_cookie(response, token)
-    return {"ok": True}
+    return {"ok": True, "token": token}
 
 
 @router.post("/login")
@@ -68,7 +68,7 @@ async def login(data: LoginRequest, response: Response):
         raise HTTPException(status_code=401, detail="Invalid email or password")
     token = create_access_token({"sub": str(doc["_id"])})
     _set_token_cookie(response, token)
-    return {"ok": True}
+    return {"ok": True, "token": token}
 
 
 @router.post("/logout")

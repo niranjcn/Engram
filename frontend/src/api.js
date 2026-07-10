@@ -1,7 +1,12 @@
 const BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+let _token = null
+
+export function setToken(t) { _token = t }
 
 function headers() {
-  return { 'Content-Type': 'application/json' }
+  const h = { 'Content-Type': 'application/json' }
+  if (_token) h['Authorization'] = `Bearer ${_token}`
+  return h
 }
 
 function opts(method, body) {
@@ -44,9 +49,20 @@ function patch(path, body) {
 
 // Auth
 export const auth = {
-  login: (email, password) => post('/auth/login', { email, password }),
-  register: (email, username, password) => post('/auth/register', { email, username, password }),
-  logout: () => post('/auth/logout'),
+  login: async (email, password) => {
+    const data = await post('/auth/login', { email, password })
+    if (data.token) setToken(data.token)
+    return data
+  },
+  register: async (email, username, password) => {
+    const data = await post('/auth/register', { email, username, password })
+    if (data.token) setToken(data.token)
+    return data
+  },
+  logout: async () => {
+    _token = null
+    return post('/auth/logout')
+  },
   me: () => get('/auth/me'),
   updateProfileVisibility: (visible) => patch('/auth/me/profile-visibility', { profile_public: visible }),
 }
