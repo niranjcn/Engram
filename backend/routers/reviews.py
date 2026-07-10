@@ -3,8 +3,8 @@ from models import UserModel
 from schemas import ReviewHistoryEntry, StatsResponse
 from auth import get_current_user
 from database import get_db
-from utils import to_date
-from datetime import datetime, timedelta
+from utils import to_date, ist_today, ist_today_start
+from datetime import timedelta
 
 router = APIRouter(prefix="/reviews", tags=["reviews"])
 
@@ -15,9 +15,9 @@ async def get_history(
     days: int = 30,
 ):
     db = await get_db()
-    thirty_days_ago = datetime.utcnow() - timedelta(days=days)
+    since = ist_today_start() - timedelta(days=days)
     cursor = db.review_history.find(
-        {"user_id": current_user.id, "date": {"$gte": thirty_days_ago}},
+        {"user_id": current_user.id, "date": {"$gte": since}},
     ).sort("date", 1)
     entries = []
     async for doc in cursor:
@@ -58,7 +58,7 @@ async def get_stats(
     current_streak = 0
     streak_count = 0
     prev_date = None
-    today = to_date(datetime.utcnow())
+    today = ist_today()
     for entry in history_entries:
         d = entry["_dt"]
         if prev_date is None:

@@ -56,6 +56,28 @@ async def _push_file(client, owner: str, repo: str, path: str, content: str, tok
     return resp.status_code in (201, 200), resp
 
 
+async def _get_github_creds(db: AsyncIOMotorDatabase, user_id: str):
+    user = await db.users.find_one({"_id": ObjectId(user_id)})
+    if not user: return None
+    encrypted_token = user.get("github_token_encrypted")
+    github_username = user.get("github_username")
+    github_repo = user.get("github_repo")
+    sync_language = user.get("sync_language", "python")
+    if not encrypted_token or not github_username or not github_repo: return None
+    return decrypt_token(encrypted_token), github_username, github_repo, _EXTENSIONS.get(sync_language, ".txt")
+
+
+async def sync_problem_file(db: AsyncIOMotorDatabase, user_id: str, title: str, notes: str):
+    creds = await _get_github_creds(db, user_id)
+    if not creds: return
+    token, owner, repo, ext = creds
+    code = (notes or "").strip()
+    if not code: return
+    filename = _sanitize_filename(title) + ext
+    async with httpx.AsyncClient() as client:
+        await _push_file(client, owner, repo, filename, code, token, f"Update {title}")
+
+
 async def sync_user_problems(db: AsyncIOMotorDatabase, user_id: str):
     user = await db.users.find_one({"_id": ObjectId(user_id)})
     if not user:
@@ -91,29 +113,53 @@ async def sync_user_problems(db: AsyncIOMotorDatabase, user_id: str):
             if ok:
                 synced_files.append(filename)
 
-        md_lines = [
-            "# LeetCode Solutions",
-            "",
-            f"Total: **{len(problems)}** problems",
-            "",
-            "| # | Title | Topic | Difficulty | File |",
-            "|---|-------|-------|------------|------|",
-        ]
-        for i, p in enumerate(problems, 1):
-            title = p["title"]
-            topic = p["topic"]
-            diff = p["difficulty"]
-            fname = _sanitize_filename(title) + ext
-            is_code = bool((p.get("notes") or "").strip())
-            file_link = f"[{fname}]({fname})" if is_code else "-"
-            md_lines.append(f"| {i} | {title} | {topic} | {diff} | {file_link} |")
-        problems_md = "\n".join(md_lines)
-
-        ok, _ = await _push_file(client, owner, repo, "README.md", problems_md, token, "Update solution list")
+        ok, _ = await _push_readme(client, owner, repo, problems, ext, token)
         if ok:
             synced_files.append("README.md")
 
     return synced_files
+
+
+async def _push_readme(client, owner, repo, problems, ext, token):
+    md_lines = [
+        "# LeetCode Solutions",
+        "",
+        f"Total: **{len(problems)}** problems",
+        "",
+        "| # | Title | Topic | Difficulty | File |",
+        "|---|-------|-------|------------|------|",
+    ]
+    for i, p in enumerate(problems, 1):
+        title = p["title"]
+        topic = p["topic"]
+        diff = p["difficulty"]
+        fname = _sanitize_filename(title) + ext
+        is_code = bool((p.get("notes") or "").strip())
+        file_link = f"[{fname}]({fname})" if is_code else "-"
+        md_lines.append(f"| {i} | {title} | {topic} | {diff} | {file_link} |")
+    problems_md = "\n".join(md_lines)
+    return await _push_file(client, owner, repo, "README.md", problems_md, token, "Update solution list")
+
+
+async def sync_readme(db: AsyncIOMotorDatabase, user_id: str):
+    user = await db.users.find_one({"_id": ObjectId(user_id)})
+    if not user:
+        return
+    encrypted_token = user.get("github_token_encrypted")
+    github_username = user.get("github_username")
+    github_repo = user.get("github_repo")
+    sync_language = user.get("sync_language", "python")
+    if not encrypted_token or not github_username or not github_repo:
+        return
+
+    token = decrypt_token(encrypted_token)
+    ext = _EXTENSIONS.get(sync_language, ".txt")
+
+    cursor = db.problems.find({"user_id": user_id})
+    problems = await cursor.to_list(length=None)
+
+    async with httpx.AsyncClient() as client:
+        await _push_readme(client, github_username, github_repo, problems, ext, token)
 
 
 @router.post("/setup-repo")

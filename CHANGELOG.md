@@ -3,10 +3,23 @@
 ## Unreleased
 
 ### Fixed
+- Heatmap now uses a true rolling 12-month window (starts from 365 days ago instead of the 1st of a month 11 months ago) — oldest column falls off left as new day appears on right
+- Heatmap date formatting uses IST (`Asia/Kolkata`) instead of UTC — today's box shows on correct day
+- Review history stored as IST midnight instead of UTC midnight (backend `ist_today_start()` / `ist_today()` helpers)
+- Background GitHub sync tasks no longer silently dropped — switched from raw `asyncio.ensure_future` to FastAPI `BackgroundTasks`, guaranteeing execution
 - Token expiry reduced from 7 days to 5 hours
 - CSP meta tag `frame-ancestors` removed (ignored in meta, already set in HTTP headers)
 - Added `mobile-web-app-capable` meta tag alongside `apple-mobile-web-app-capable`
 - Added inline script to auto-reload on failed module/dynamic import (prevents blank page on stale cache)
+
+### Changed
+- Heatmap shifts daily — on visibility change, if the date has changed, re-fetches data and recalculates the rolling window
+- `POST /problems/{id}/review` now updates GitHub README (via `sync_readme`)
+- **Create / Update** only pushes the changed problem file + README to GitHub (was pushing all files)
+- **Delete** only pushes README (was pushing all files)
+- GitHub sync extracted into reusable helpers: `_get_github_creds`, `sync_problem_file`, `_push_readme`
+- Streak calculation uses IST today via `ist_today()` (was `datetime.utcnow()`)
+- History query uses IST date boundaries via `ist_today_start()` (was `datetime.now()`)
 
 ### Changed
 - `POST /github/setup-repo` now detects existing `LeetCode` repo (reuses instead of failing)

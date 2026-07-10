@@ -4,12 +4,12 @@ import base64
 import hashlib
 
 def _get_key() -> bytes:
-    key = os.environ.get("FERNET_KEY")
+    key = os.environ.get("GITHUB_TOKEN_ENCRYPTION_KEY")
     if key:
         return key.encode()
     secret = os.environ.get("SECRET_KEY")
     if not secret:
-        raise RuntimeError("FERNET_KEY or SECRET_KEY must be set for token encryption")
+        raise RuntimeError("GITHUB_TOKEN_ENCRYPTION_KEY or SECRET_KEY must be set for token encryption")
     raw = hashlib.sha256(secret.encode()).digest()
     return base64.urlsafe_b64encode(raw)
 

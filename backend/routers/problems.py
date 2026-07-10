@@ -1,11 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from models import UserModel, ProblemModel
 from schemas import ProblemCreate, ProblemUpdate, ProblemResponse, ReviewRequest
 from auth import get_current_user
 from database import get_db
 from sm2 import run_sm2
-from utils import to_date
-from routers.github import sync_user_problems
+from utils import to_date, ist_today_start
+from routers.github import sync_readme, sync_problem_file
 from datetime import datetime, timedelta
 from bson import ObjectId
 from bson.errors import InvalidId
@@ -64,6 +64,7 @@ async def list_problems(
 @router.post("", response_model=ProblemResponse)
 async def create_problem(
     data: ProblemCreate,
+    bg_tasks: BackgroundTasks,
     current_user: UserModel = Depends(get_current_user),
 ):
     db = await get_db()
@@ -87,7 +88,8 @@ async def create_problem(
     }
     result = await db.problems.insert_one(doc)
     doc["_id"] = result.inserted_id
-    await sync_user_problems(db, current_user.id)
+    bg_tasks.add_task(sync_problem_file, db, current_user.id, data.title, data.notes)
+    bg_tasks.add_task(sync_readme, db, current_user.id)
     return problem_to_response(doc_to_problem(doc))
 
 
@@ -105,6 +107,7 @@ async def get_problem(
 async def update_problem(
     problem_id: str,
     data: ProblemUpdate,
+    bg_tasks: BackgroundTasks,
     current_user: UserModel = Depends(get_current_user),
 ):
     db = await get_db()
@@ -119,20 +122,22 @@ async def update_problem(
             {"_id": doc["_id"]},
             {"$set": update_data},
         )
-    await sync_user_problems(db, current_user.id)
     updated = await db.problems.find_one({"_id": doc["_id"]})
+    bg_tasks.add_task(sync_problem_file, db, current_user.id, updated["title"], updated.get("notes", ""))
+    bg_tasks.add_task(sync_readme, db, current_user.id)
     return problem_to_response(doc_to_problem(updated))
 
 
 @router.delete("/{problem_id}")
 async def delete_problem(
     problem_id: str,
+    bg_tasks: BackgroundTasks,
     current_user: UserModel = Depends(get_current_user),
 ):
     db = await get_db()
     doc = await _get_problem_or_404(db, problem_id, current_user.id)
     await db.problems.delete_one({"_id": doc["_id"]})
-    await sync_user_problems(db, current_user.id)
+    bg_tasks.add_task(sync_readme, db, current_user.id)
     return {"ok": True}
 
 
@@ -140,6 +145,7 @@ async def delete_problem(
 async def review_problem(
     problem_id: str,
     data: ReviewRequest,
+    bg_tasks: BackgroundTasks,
     current_user: UserModel = Depends(get_current_user),
 ):
     if data.outcome not in OUTCOMES:
@@ -152,8 +158,7 @@ async def review_problem(
         {"_id": doc["_id"]},
         {"$set": result},
     )
-    now = datetime.utcnow()
-    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    today_start = ist_today_start()
     today_end = today_start + timedelta(days=1)
     existing = await db.review_history.find_one(
         {"user_id": current_user.id, "date": {"$gte": today_start, "$lt": today_end}},
@@ -169,5 +174,6 @@ async def review_problem(
             "date": today_start,
             "review_count": 1,
         })
+    bg_tasks.add_task(sync_readme, db, current_user.id)
     updated = await db.problems.find_one({"_id": doc["_id"]})
     return problem_to_response(doc_to_problem(updated))

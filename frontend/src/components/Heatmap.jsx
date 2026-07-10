@@ -1,9 +1,10 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 
 const CELL = 12;
 const GAP = 3;
 const MONTH_GAP = 14;
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const TZ = "Asia/Kolkata";
 
 function getColor(count) {
   if (count === 0) return "#23262E";
@@ -72,45 +73,82 @@ function HeatmapGrid({ weeks }) {
   );
 }
 
+function toIST(d) {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit",
+  }).format(d);
+}
+
 export default function Heatmap({ data }) {
   if (!data || data.length === 0) return <p className="text-sm text-[#5D616C]">No activity data</p>;
 
-  const histMap = Object.fromEntries(data.map(h => [h.date, h.count]));
+  const { groups } = useMemo(() => {
+    const histMap = Object.fromEntries(data.map(h => [h.date, h.count]));
 
-  const today = new Date();
-  const cur = new Date(today.getFullYear(), today.getMonth() - 11, 1);
-  const groups = [];
+    const todayStr = toIST(new Date());
+    const [ty, tm, td] = todayStr.split("-").map(Number);
 
-  for (let m = 0; m < 12; m++) {
-    const year = cur.getFullYear();
-    const month = cur.getMonth();
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-    const offset = (firstDay.getDay() + 6) % 7;
-    const totalDays = m === 11 ? today.getDate() : lastDay.getDate();
-    const numCols = Math.ceil((offset + totalDays) / 7);
+    let sy = ty, sm = tm - 12, sd = td;
+    if (sm <= 0) { sm += 12; sy--; }
+    const startMonthDays = new Date(sy, sm, 0).getDate();
+    if (sd > startMonthDays) sd = startMonthDays;
 
-    const weeks = [];
-    let dayNum = 1;
-    for (let col = 0; col < numCols; col++) {
-      const colItems = [];
-      for (let row = 0; row < 7; row++) {
-        const idx = col * 7 + row;
-        if (idx < offset || dayNum > totalDays) {
-          colItems.push(null);
-        } else {
-          const d = new Date(year, month, dayNum);
-          const ds = d.toISOString().split("T")[0];
-          colItems.push({ date: ds, count: histMap[ds] || 0 });
-          dayNum++;
-        }
+    const cur = new Date(sy, sm - 1, 1);
+    const groups = [];
+    let isFirst = true;
+
+    while (true) {
+      const year = cur.getFullYear();
+      const month = cur.getMonth();
+      const lastDay = new Date(year, month + 1, 0);
+      const firstDay = new Date(year, month, 1);
+      const offset = (firstDay.getDay() + 6) % 7;
+
+      let startDay = 1;
+      let totalDays = lastDay.getDate();
+      let firstOffset = offset;
+
+      if (isFirst) {
+        startDay = sd;
+        firstOffset = (new Date(year, month, sd).getDay() + 6) % 7;
+        isFirst = false;
       }
-      weeks.push(colItems);
+
+      if (year === ty && month === tm - 1) {
+        totalDays = td;
+      }
+
+      const numCols = Math.ceil((firstOffset + totalDays - startDay + 1) / 7);
+      const weeks = [];
+      let dayNum = startDay;
+
+      for (let col = 0; col < numCols; col++) {
+        const colItems = [];
+        for (let row = 0; row < 7; row++) {
+          const idx = col * 7 + row;
+          if (idx < firstOffset || dayNum > totalDays) {
+            colItems.push(null);
+          } else {
+            const d = new Date(year, month, dayNum);
+            colItems.push({ date: toIST(d), count: histMap[toIST(d)] || 0 });
+            dayNum++;
+          }
+        }
+        weeks.push(colItems);
+      }
+
+      groups.push({
+        label: MONTHS[month],
+        weeks,
+        width: weeks.length * CELL + (weeks.length - 1) * GAP,
+      });
+
+      if (year === ty && month === tm - 1) break;
+      cur.setMonth(cur.getMonth() + 1);
     }
 
-    groups.push({ label: MONTHS[month], weeks, width: weeks.length * CELL + (weeks.length - 1) * GAP });
-    cur.setMonth(cur.getMonth() + 1);
-  }
+    return { groups };
+  }, [data]);
 
   return (
     <div>

@@ -28,6 +28,17 @@ export function AppDataProvider({ children, user }) {
 
   useEffect(() => { refresh(); }, [refresh]);
 
+  useEffect(() => {
+    let lastDate = new Date().toDateString();
+    const onVisible = () => {
+      if (document.visibilityState !== "visible") return;
+      const today = new Date().toDateString();
+      if (today !== lastDate) { lastDate = today; refresh(); }
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [refresh]);
+
   const addProblem = async (form) => {
     if (form.url && !SAFE_URL_RE.test(form.url)) {
       throw new Error("URL must start with http:// or https://");
