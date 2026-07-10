@@ -405,6 +405,7 @@ flowchart LR
 | **Secret Key** | Required at startup — no fallback default |
 | **Registration** | Generic error message prevents email enumeration |
 | **Admin Seeding** | Admin account created via env vars on first startup (never exposed in logs) |
+| **Known Limitation** | JWT token is exposed to JS memory as fallback when cross-origin cookies are blocked (Chrome). Future: put backend on subdomain of frontend domain to restore httpOnly cookie protection. |
 
 ---
 
