@@ -45,6 +45,7 @@ export const auth = {
   register: (email, username, password) => post('/auth/register', { email, username, password }),
   logout: () => post('/auth/logout'),
   me: () => get('/auth/me'),
+  updateProfileVisibility: (visible) => patch('/auth/me/profile-visibility', { profile_public: visible }),
 }
 
 // Problems — convert camelCase↔snake_case for backend
@@ -114,6 +115,14 @@ export const adminApi = {
   userProblems: (id) => get(`/admin/users/${id}/problems`),
   updateRole: (id, role) => patch(`/admin/users/${id}/role`, { role }),
   deleteUser: (id) => del(`/admin/users/${id}`),
+}
+
+// Public Profiles
+export const profilesApi = {
+  list: (q = '') => get(`/profiles${q ? `?q=${encodeURIComponent(q)}` : ''}`),
+  get: (username) => get(`/profiles/${encodeURIComponent(username)}`),
+  history: (username, days = 365) => get(`/profiles/${encodeURIComponent(username)}/history?days=${days}`),
+  problems: (username) => get(`/profiles/${encodeURIComponent(username)}/problems`),
 }
 
 // GitHub

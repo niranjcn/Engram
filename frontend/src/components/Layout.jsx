@@ -1,5 +1,5 @@
 import { Outlet, NavLink } from "react-router-dom";
-import { Brain, Home, List, Plus, BarChart2, Settings as SettingsIcon, Shield } from "lucide-react";
+import { Brain, Home, List, Plus, BarChart2, Settings as SettingsIcon, Shield, Users } from "lucide-react";
 import { useAppData } from "../context/AppDataContext";
 import useAuth from "../hooks/useAuth";
 import { today } from "../lib/utils";
@@ -15,6 +15,7 @@ export default function Layout({ onLogout }) {
     { to: "/problems", icon: List, label: "Problems" },
     { to: "/add", icon: Plus, label: "New" },
     { to: "/stats", icon: BarChart2, label: "Stats" },
+    { to: "/users", icon: Users, label: "Community" },
   ];
 
   const linkClass = ({ isActive }) =>

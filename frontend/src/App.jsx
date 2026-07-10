@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { Brain } from "lucide-react";
 import Layout from "./components/Layout";
+import PublicLayout from "./components/PublicLayout";
 import RequireAdmin from "./components/RequireAdmin";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
@@ -11,6 +12,8 @@ import EditProblem from "./pages/EditProblem";
 import Stats from "./pages/Stats";
 import Settings from "./pages/Settings";
 import GithubCallback from "./pages/GithubCallback";
+import UserDirectory from "./pages/UserDirectory";
+import ProfilePage from "./pages/ProfilePage";
 import AdminDashboard from "./pages/admin/Dashboard";
 import AdminUsers from "./pages/admin/Users";
 import AdminUserDetail from "./pages/admin/UserDetail";
@@ -32,6 +35,10 @@ export default function App() {
   return (
     <Routes>
       <Route path="/github-callback" element={<GithubCallback />} />
+      <Route element={<PublicLayout />}>
+        <Route path="/users" element={<UserDirectory />} />
+        <Route path="/u/:username" element={<ProfilePage />} />
+      </Route>
       {!user ? (
         <>
           <Route path="/register" element={<RegisterPage onRegister={(u) => u ? login(u) : null} />} />
@@ -45,6 +52,8 @@ export default function App() {
           <Route path="/edit/:id" element={<EditProblem />} />
           <Route path="/stats" element={<Stats />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/users" element={<UserDirectory />} />
+          <Route path="/u/:username" element={<ProfilePage />} />
           <Route path="/admin" element={<RequireAdmin><AdminDashboard /></RequireAdmin>} />
           <Route path="/admin/users" element={<RequireAdmin><AdminUsers /></RequireAdmin>} />
           <Route path="/admin/users/:id" element={<RequireAdmin><AdminUserDetail /></RequireAdmin>} />

@@ -6,7 +6,7 @@ from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
 from database import close_db, get_db
 from auth import hash_password
-from routers import auth, problems, reviews, admin, github
+from routers import auth, problems, reviews, admin, github, profiles
 import os
 import time
 
@@ -102,6 +102,7 @@ app.include_router(problems.router)
 app.include_router(reviews.router)
 app.include_router(admin.router)
 app.include_router(github.router)
+app.include_router(profiles.router)
 
 
 @app.get("/")

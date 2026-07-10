@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import useAuth from "../hooks/useAuth";
-import { githubApi } from "../api";
+import { auth, githubApi } from "../api";
 
 const GITHUB_SCOPE = "repo,read:user";
 const LANGUAGES = [
@@ -20,6 +20,12 @@ export default function Settings() {
   const [settingUp, setSettingUp] = useState(false);
   const [language, setLanguage] = useState(user?.sync_language || "python");
   const [savingLang, setSavingLang] = useState(false);
+  const [profilePublic, setProfilePublic] = useState(true);
+  const [savingVisibility, setSavingVisibility] = useState(false);
+
+  useEffect(() => {
+    if (user) setProfilePublic(user.profile_public !== false);
+  }, [user]);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const oauthStateRef = useRef(null);
@@ -133,9 +139,53 @@ export default function Settings() {
     }
   }
 
+  async function handleVisibilityToggle() {
+    const next = !profilePublic;
+    setError(null);
+    setSuccess(null);
+    setSavingVisibility(true);
+    try {
+      await auth.updateProfileVisibility(next);
+      setProfilePublic(next);
+      setSuccess(next ? "Profile is now public" : "Profile is now hidden");
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSavingVisibility(false);
+    }
+  }
+
   return (
     <div className="max-w-2xl space-y-6">
       <h1 className="text-2xl font-semibold text-[#F1F1F3]">Settings</h1>
+
+      {/* Profile visibility */}
+      <div className="rounded-xl border border-[#23262E] bg-[#16181E] p-6">
+        <h2 className="text-lg font-medium text-[#F1F1F3] mb-4">Profile Visibility</h2>
+        <p className="text-sm text-[#5D616C] mb-4">
+          Control whether your profile appears in the community directory and is visible to other users.
+        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm text-[#F1F1F3]">Show profile in community</p>
+            <p className="text-xs text-[#5D616C] mt-0.5">
+              {profilePublic ? "Anyone can view your stats and problems" : "Hidden from community directory"}
+            </p>
+          </div>
+          <button
+            onClick={handleVisibilityToggle}
+            disabled={savingVisibility}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors shrink-0 ${
+              profilePublic ? "bg-[#3B82F6]" : "bg-[#23262E]"
+            }`}
+          >
+            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+              profilePublic ? "translate-x-6" : "translate-x-1"
+            }`} />
+          </button>
+        </div>
+        {savingVisibility && <p className="text-xs text-[#5D616C] mt-2">Saving...</p>}
+      </div>
 
       <div className="rounded-xl border border-[#23262E] bg-[#16181E] p-6">
         <h2 className="text-lg font-medium text-[#F1F1F3] mb-4">GitHub Integration</h2>

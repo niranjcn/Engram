@@ -1,7 +1,7 @@
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Response, Request
 from models import UserModel
-from schemas import RegisterRequest, LoginRequest, TokenResponse, UserResponse, GitHubAuthRequest, GitHubLanguageRequest
+from schemas import RegisterRequest, LoginRequest, TokenResponse, UserResponse, GitHubAuthRequest, GitHubLanguageRequest, ProfilePublicUpdate
 from auth import hash_password, verify_password, create_access_token, get_current_user, COOKIE_NAME
 from database import get_db
 from crypto import encrypt_token
@@ -82,6 +82,9 @@ async def logout(response: Response):
 
 @router.get("/me", response_model=UserResponse)
 async def me(current_user: UserModel = Depends(get_current_user)):
+    db = await get_db()
+    doc = await db.users.find_one({"_id": ObjectId(current_user.id)})
+    profile_public = doc.get("profile_public", True) if doc else True
     return UserResponse(
         id=current_user.id,
         email=current_user.email,
@@ -91,7 +94,18 @@ async def me(current_user: UserModel = Depends(get_current_user)):
         github_username=current_user.github_username,
         github_repo=current_user.github_repo,
         sync_language=current_user.sync_language,
+        profile_public=profile_public,
     )
+
+
+@router.patch("/me/profile-visibility")
+async def update_profile_visibility(data: ProfilePublicUpdate, current_user: UserModel = Depends(get_current_user)):
+    db = await get_db()
+    await db.users.update_one(
+        {"_id": ObjectId(current_user.id)},
+        {"$set": {"profile_public": data.profile_public}},
+    )
+    return {"ok": True}
 
 
 @router.get("/github/config")

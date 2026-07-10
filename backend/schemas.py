@@ -35,6 +35,7 @@ class UserResponse(BaseModel):
     github_username: Optional[str] = None
     github_repo: Optional[str] = None
     sync_language: Optional[str] = None
+    profile_public: bool = True
 
 class GitHubAuthRequest(BaseModel):
     code: str
@@ -111,3 +112,27 @@ class StatsResponse(BaseModel):
     by_topic: dict
     by_outcome: dict
     streak: dict
+
+
+class ProfilePublicUpdate(BaseModel):
+    profile_public: bool
+
+
+class PublicProblemResponse(BaseModel):
+    id: str
+    title: str
+    url: Optional[str] = None
+    topic: str
+    difficulty: str
+    last_outcome: Optional[str] = None
+    date_added: date
+
+
+class PublicUserResponse(BaseModel):
+    id: str
+    username: str
+    created_at: datetime
+    total_solved: int = 0
+    mastered: int = 0
+    current_streak: int = 0
+    longest_streak: int = 0

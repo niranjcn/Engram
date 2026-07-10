@@ -14,6 +14,7 @@ class UserModel(BaseModel):
     github_username: Optional[str] = None
     github_repo: Optional[str] = None
     sync_language: Optional[str] = None
+    profile_public: bool = True
 
 
 class ProblemModel(BaseModel):

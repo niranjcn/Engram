@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Brain, Eye, EyeOff } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Brain, Eye, EyeOff, Users } from "lucide-react";
 import Btn from "../components/Btn";
 import { auth } from "../api";
 
@@ -43,6 +44,9 @@ export default function LoginPage({ onLogin }) {
             <Btn className="w-full justify-center" disabled={busy}>{busy ? <span className="spinner-sm" /> : "Sign In"}</Btn>
           </form>
           <p className="text-center text-xs text-[#5D616C] mt-4">No account? <button className="text-[#3B82F6] hover:underline transition-colors" onClick={() => onLogin(null, true)}>Register</button></p>
+          <Link to="/users" className="flex items-center justify-center gap-1.5 text-xs text-[#5D616C] hover:text-[#8B8F96] mt-3 pt-3 border-t border-[#23262E] transition-colors">
+            <Users size={14} /> Browse community profiles
+          </Link>
         </div>
       </div>
     </div>
