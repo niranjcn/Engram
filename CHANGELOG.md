@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v2.0.0 (2026-07-10)
 
 ### Fixed
 - Cross-origin auth: cookie `SameSite` now correctly set to `None` with `Secure` when production origins are present in `ALLOWED_ORIGINS` (fixes Chrome login when frontend on Netlify and backend on Railway) — `auth.py:_cookie_secure()` checks origin URLs individually instead of substring-matching the whole list
